@@ -34,7 +34,6 @@ derive_more = { version = "1.0.0", features = [
     "try_unwrap",
     "unwrap",
 ] }
-smol_str = "0.2.2"
 rand = "0.8.5"
 hydrogen_graphics = { path = "../hydrogen_graphics" }
 hydrogen_core_proc_macro = { path = "../hydrogen_core_proc_macro" }

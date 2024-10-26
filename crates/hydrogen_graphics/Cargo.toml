@@ -7,7 +7,31 @@ edition = "2021"
 cgmath = "0.18.0"
 image = "0.25.1"
 lazy_static = "1.4.0"
-derive_more = "0.99.17"
+derive_more = { version = "1.0.0", features = [
+    "add",
+    "add_assign",
+    "as_ref",
+    "constructor",
+    "deref",
+    "deref_mut",
+    "display",
+    "error",
+    "from",
+    "from_str",
+    "index",
+    "index_mut",
+    "into",
+    "into_iterator",
+    "is_variant",
+    "mul",
+    "mul_assign",
+    "not",
+    "sum",
+    "try_from",
+    "try_into",
+    "try_unwrap",
+    "unwrap",
+] }
 futures = "0.3.30"
 bytemuck = { version = "1.16.0", features = ["derive"] }
 anyhow = "1.0.86"

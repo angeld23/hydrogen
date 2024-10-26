@@ -7,7 +7,31 @@ edition = "2021"
 cgmath = { version = "0.18.0", features = ["swizzle"] }
 clipboard-anywhere = "0.2.3"
 codepage-437 = "0.1.0"
-derive_more = "0.99.18"
+derive_more = { version = "1.0.0", features = [
+    "add",
+    "add_assign",
+    "as_ref",
+    "constructor",
+    "deref",
+    "deref_mut",
+    "display",
+    "error",
+    "from",
+    "from_str",
+    "index",
+    "index_mut",
+    "into",
+    "into_iterator",
+    "is_variant",
+    "mul",
+    "mul_assign",
+    "not",
+    "sum",
+    "try_from",
+    "try_into",
+    "try_unwrap",
+    "unwrap",
+] }
 image = "0.25.1"
 lazy_static = "1.5.0"
 serde = "1.0.204"

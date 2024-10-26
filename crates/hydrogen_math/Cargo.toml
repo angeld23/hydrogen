@@ -5,7 +5,31 @@ edition = "2021"
 
 [dependencies]
 cgmath = "0.18.0"
-derive_more = "0.99.17"
+derive_more = { version = "1.0.0", features = [
+    "add",
+    "add_assign",
+    "as_ref",
+    "constructor",
+    "deref",
+    "deref_mut",
+    "display",
+    "error",
+    "from",
+    "from_str",
+    "index",
+    "index_mut",
+    "into",
+    "into_iterator",
+    "is_variant",
+    "mul",
+    "mul_assign",
+    "not",
+    "sum",
+    "try_from",
+    "try_into",
+    "try_unwrap",
+    "unwrap",
+] }
 linear-map = "1.2.0"
 serde = { version = "1.0.203", features = ["serde_derive"] }
 serde-big-array = "0.5.1"

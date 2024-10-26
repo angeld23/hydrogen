@@ -3,11 +3,10 @@ use cgmath::{vec2, Vector2};
 use derive_more::*;
 use hydrogen_math::bounding_box::BBox2;
 use linear_map::set::LinearSet;
-use smol_str::SmolStr;
 use winit::{
     dpi::PhysicalPosition,
     event::{DeviceEvent, Ime, MouseButton, MouseScrollDelta, WindowEvent},
-    keyboard::{Key, NamedKey},
+    keyboard::{Key, NamedKey, SmolStr},
     platform::modifier_supplement::KeyEventExtModifierSupplement,
 };
 

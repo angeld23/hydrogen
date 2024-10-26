@@ -8,5 +8,29 @@ hydrogen_math = { path = "../hydrogen_math" }
 cgmath = "0.18.0"
 linear-map = "1.2.0"
 serde = "1.0.204"
-derive_more = "0.99.18"
+derive_more = { version = "1.0.0", features = [
+    "add",
+    "add_assign",
+    "as_ref",
+    "constructor",
+    "deref",
+    "deref_mut",
+    "display",
+    "error",
+    "from",
+    "from_str",
+    "index",
+    "index_mut",
+    "into",
+    "into_iterator",
+    "is_variant",
+    "mul",
+    "mul_assign",
+    "not",
+    "sum",
+    "try_from",
+    "try_into",
+    "try_unwrap",
+    "unwrap",
+] }
 thiserror = "1.0.62"
