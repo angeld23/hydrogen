@@ -1,0 +1,38 @@
+[package]
+name = "hydrogen_ecs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.86"
+derive_more = { version = "1.0.0", features = [
+    "add",
+    "add_assign",
+    "as_ref",
+    "constructor",
+    "deref",
+    "deref_mut",
+    "display",
+    "error",
+    "from",
+    "from_str",
+    "index",
+    "index_mut",
+    "into",
+    "into_iterator",
+    "is_variant",
+    "mul",
+    "mul_assign",
+    "not",
+    "sum",
+    "try_from",
+    "try_into",
+    "try_unwrap",
+    "unwrap",
+] }
+paste = "1.0.15"
+postcard = { version = "1.0.10", features = ["alloc"] }
+serde = "1.0.209"
+thiserror = "1.0.63"
+hydrogen_ecs_proc_macro = { path = "../hydrogen_ecs_proc_macro" }
+aligned-vec = "0.6.1"

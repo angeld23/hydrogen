@@ -1,0 +1,21 @@
+[package]
+name = "hydrogen_gui"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cgmath = { version = "0.18.0", features = ["swizzle"] }
+clipboard-anywhere = "0.2.3"
+codepage-437 = "0.1.0"
+derive_more = "0.99.18"
+image = "0.25.1"
+lazy_static = "1.5.0"
+serde = "1.0.204"
+hydrogen_core = { path = "../hydrogen_core" }
+hydrogen_data_structures = { path = "../hydrogen_data_structures" }
+hydrogen_math = { path = "../hydrogen_math" }
+hydrogen_graphics = { path = "../hydrogen_graphics" }
+color-eyre = "0.6.3"
+winit = "0.30.4"
+env_logger = "0.11.3"
+log = "0.4.22"

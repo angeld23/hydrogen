@@ -1,0 +1,19 @@
+[package]
+name = "hydrogen"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+members = ["crates/*"]
+
+[dependencies]
+hydrogen_graphics = { path = "crates/hydrogen_graphics" }
+hydrogen_math = { path = "crates/hydrogen_math" }
+hydrogen_debug = { path = "crates/hydrogen_debug" }
+hydrogen_core = { path = "crates/hydrogen_core" }
+hydrogen_gui = { path = "crates/hydrogen_gui" }
+hydrogen_ecs = { path = "crates/hydrogen_ecs" }
+hydrogen_net = { path = "crates/hydrogen_net" }
+winit = "0.30.5"
+anyhow = "1.0.91"
+env_logger = "0.11.5"

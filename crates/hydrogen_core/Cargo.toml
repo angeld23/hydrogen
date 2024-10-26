@@ -1,0 +1,40 @@
+[package]
+name = "hydrogen_core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cgmath = "0.18.0"
+linear-map = "1.2.0"
+serde = "1.0.204"
+winit = "0.30.4"
+hydrogen_math = { path = "../hydrogen_math" }
+derive_more = { version = "1.0.0", features = [
+    "add",
+    "add_assign",
+    "as_ref",
+    "constructor",
+    "deref",
+    "deref_mut",
+    "display",
+    "error",
+    "from",
+    "from_str",
+    "index",
+    "index_mut",
+    "into",
+    "into_iterator",
+    "is_variant",
+    "mul",
+    "mul_assign",
+    "not",
+    "sum",
+    "try_from",
+    "try_into",
+    "try_unwrap",
+    "unwrap",
+] }
+smol_str = "0.2.2"
+rand = "0.8.5"
+hydrogen_graphics = { path = "../hydrogen_graphics" }
+hydrogen_core_proc_macro = { path = "../hydrogen_core_proc_macro" }

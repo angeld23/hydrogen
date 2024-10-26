@@ -1,0 +1,12 @@
+[package]
+name = "hydrogen_data_structures"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+hydrogen_math = { path = "../hydrogen_math" }
+cgmath = "0.18.0"
+linear-map = "1.2.0"
+serde = "1.0.204"
+derive_more = "0.99.18"
+thiserror = "1.0.62"

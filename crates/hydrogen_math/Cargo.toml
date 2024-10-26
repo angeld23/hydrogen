@@ -1,0 +1,11 @@
+[package]
+name = "hydrogen_math"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cgmath = "0.18.0"
+derive_more = "0.99.17"
+linear-map = "1.2.0"
+serde = { version = "1.0.203", features = ["serde_derive"] }
+serde-big-array = "0.5.1"
