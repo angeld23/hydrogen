@@ -36,6 +36,21 @@ pub struct TcpCommunicator<const MAX_INCOMING_MESSAGE_SIZE: usize = 32768> {
     pub write_buffer: Vec<u8>,
 }
 
+impl<const MAX_INCOMING_MESSAGE_SIZE: usize> std::fmt::Debug
+    for TcpCommunicator<MAX_INCOMING_MESSAGE_SIZE>
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TcpCommunicator")
+            .field("stream", &self.stream)
+            .field("read_queue", &format!("({} msgs)", self.read_queue.len()))
+            .field("write_queue", &format!("({} msgs)", self.write_queue.len()))
+            .field("read_buffer", &self.read_buffer)
+            .field("read_position", &self.read_position)
+            .field("write_buffer", &self.write_buffer)
+            .finish()
+    }
+}
+
 impl<const MAX_INCOMING_MESSAGE_SIZE: usize> TcpCommunicator<MAX_INCOMING_MESSAGE_SIZE> {
     pub fn new(stream: TcpStream) -> Self {
         stream.set_nonblocking(true).unwrap();
