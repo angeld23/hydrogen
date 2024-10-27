@@ -6,4 +6,36 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.91"
 env_logger = "0.11.5"
+derive_more = { version = "1.0.0", features = [
+    "add",
+    "add_assign",
+    "as_ref",
+    "constructor",
+    "deref",
+    "deref_mut",
+    "display",
+    "error",
+    "from",
+    "from_str",
+    "index",
+    "index_mut",
+    "into",
+    "into_iterator",
+    "is_variant",
+    "mul",
+    "mul_assign",
+    "not",
+    "sum",
+    "try_from",
+    "try_into",
+    "try_unwrap",
+    "unwrap",
+] }
+log = "0.4.22"
+rand = "0.8.5"
+postcard = "1.0.10"
+erased-serde = "0.4.5"
+typetag = "0.2.18"
 serde = "1.0.213"
+hydrogen_net_proc_macro = { path = "../hydrogen_net_proc_macro" }
+thiserror = "1.0.65"
