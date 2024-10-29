@@ -1,15 +1,16 @@
 use log::error;
 use std::{
+    any::Any,
     collections::VecDeque,
     io::{self, Read, Write},
-    net::TcpStream,
+    net::{Shutdown, TcpStream},
 };
 use thiserror::Error;
 
 pub use hydrogen_net_proc_macro::NetMessage;
 
 #[typetag::serde(tag = "type")]
-pub trait NetMessage: 'static {}
+pub trait NetMessage: Any {}
 
 #[derive(Debug, Error)]
 pub enum TcpCommunicatorError {
@@ -27,41 +28,45 @@ pub enum TcpCommunicatorError {
     WriteIoError(io::Error),
 }
 
-pub struct TcpCommunicator<const MAX_INCOMING_MESSAGE_SIZE: usize = 32768> {
+pub struct TcpCommunicator {
     pub stream: TcpStream,
-    pub read_queue: VecDeque<Box<dyn NetMessage>>,
-    pub write_queue: VecDeque<Box<dyn NetMessage>>,
-    pub read_buffer: [u8; MAX_INCOMING_MESSAGE_SIZE],
-    pub read_position: usize,
-    pub write_buffer: Vec<u8>,
+    pub max_message_size: usize,
+    read_queue: VecDeque<Box<dyn NetMessage>>,
+    write_queue: VecDeque<Box<dyn NetMessage>>,
+    read_buffer: Vec<u8>,
+    read_position: usize,
+    write_buffer: Vec<u8>,
+    closed: bool,
 }
 
-impl<const MAX_INCOMING_MESSAGE_SIZE: usize> std::fmt::Debug
-    for TcpCommunicator<MAX_INCOMING_MESSAGE_SIZE>
-{
+impl std::fmt::Debug for TcpCommunicator {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("TcpCommunicator")
             .field("stream", &self.stream)
+            .field("max_message_size", &self.max_message_size)
             .field("read_queue", &format!("({} msgs)", self.read_queue.len()))
             .field("write_queue", &format!("({} msgs)", self.write_queue.len()))
             .field("read_buffer", &self.read_buffer)
             .field("read_position", &self.read_position)
             .field("write_buffer", &self.write_buffer)
+            .field("closed", &self.closed)
             .finish()
     }
 }
 
-impl<const MAX_INCOMING_MESSAGE_SIZE: usize> TcpCommunicator<MAX_INCOMING_MESSAGE_SIZE> {
-    pub fn new(stream: TcpStream) -> Self {
+impl TcpCommunicator {
+    pub fn new(stream: TcpStream, max_message_size: usize) -> Self {
         stream.set_nonblocking(true).unwrap();
 
         Self {
             stream,
+            max_message_size,
             read_queue: VecDeque::default(),
             write_queue: VecDeque::default(),
-            read_buffer: [0; MAX_INCOMING_MESSAGE_SIZE],
+            read_buffer: vec![0; max_message_size], // never resize this vec
             read_position: 0,
-            write_buffer: Vec::with_capacity(MAX_INCOMING_MESSAGE_SIZE),
+            write_buffer: Vec::with_capacity(max_message_size),
+            closed: false,
         }
     }
 
@@ -75,6 +80,21 @@ impl<const MAX_INCOMING_MESSAGE_SIZE: usize> TcpCommunicator<MAX_INCOMING_MESSAG
 
     pub fn recv_all(&mut self) -> Vec<Box<dyn NetMessage>> {
         self.read_queue.drain(..).collect()
+    }
+
+    pub fn close(&mut self) -> bool {
+        if self.closed {
+            return false;
+        }
+
+        self.closed = true;
+        let _ = self.stream.shutdown(Shutdown::Both);
+
+        true
+    }
+
+    pub fn is_closed(&self) -> bool {
+        self.closed
     }
 
     pub fn update(&mut self) -> Result<(), TcpCommunicatorError> {
@@ -101,7 +121,7 @@ impl<const MAX_INCOMING_MESSAGE_SIZE: usize> TcpCommunicator<MAX_INCOMING_MESSAG
             let old_read_position = self.read_position;
             self.read_position += bytes_read;
 
-            let stream_cleared = self.read_position < MAX_INCOMING_MESSAGE_SIZE;
+            let stream_cleared = self.read_position < self.max_message_size;
 
             let mut message_start = 0usize;
             for index in old_read_position..self.read_position {
@@ -115,15 +135,15 @@ impl<const MAX_INCOMING_MESSAGE_SIZE: usize> TcpCommunicator<MAX_INCOMING_MESSAG
                         Err(e) => return Err(TcpCommunicatorError::ReadDeserializeError(e)),
                     }
                     message_start = index + 1;
-                } else if message_start == 0 && index >= MAX_INCOMING_MESSAGE_SIZE - 1 {
+                } else if message_start == 0 && index >= self.max_message_size - 1 {
                     self.read_position = 0;
                     return Err(TcpCommunicatorError::ReadBufferOverflow(
-                        MAX_INCOMING_MESSAGE_SIZE,
+                        self.max_message_size,
                     ));
                 }
             }
 
-            if message_start < MAX_INCOMING_MESSAGE_SIZE {
+            if message_start < self.max_message_size {
                 self.read_buffer
                     .copy_within(message_start..self.read_position, 0);
             }
@@ -136,7 +156,7 @@ impl<const MAX_INCOMING_MESSAGE_SIZE: usize> TcpCommunicator<MAX_INCOMING_MESSAG
 
         // write all queued requests
         if !self.write_queue.is_empty() {
-            let mut holder = [0u8; MAX_INCOMING_MESSAGE_SIZE];
+            let mut holder = vec![0u8; self.max_message_size];
             for message in self.write_queue.drain(..) {
                 match postcard::to_slice_cobs(&message, &mut holder) {
                     Ok(slice) => self.write_buffer.extend_from_slice(slice),

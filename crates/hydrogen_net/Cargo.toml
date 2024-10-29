@@ -38,4 +38,5 @@ erased-serde = "0.4.5"
 typetag = "0.2.18"
 serde = "1.0.213"
 hydrogen_net_proc_macro = { path = "../hydrogen_net_proc_macro" }
+hydrogen_ecs = { path = "../hydrogen_ecs" }
 thiserror = "1.0.65"
