@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{comm::NetMessage, server_client::ClientId};
 
 #[derive(Debug, Component)]
-pub struct Networked {
+pub struct Replicated {
     pub owner: Option<ClientId>,
 }
 
