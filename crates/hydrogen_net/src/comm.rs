@@ -36,6 +36,7 @@ pub struct TcpCommunicator {
     read_buffer: Vec<u8>,
     read_position: usize,
     write_buffer: Vec<u8>,
+    pre_write_buffer: Vec<u8>,
     closed: bool,
 }
 
@@ -49,6 +50,7 @@ impl std::fmt::Debug for TcpCommunicator {
             .field("read_buffer", &self.read_buffer)
             .field("read_position", &self.read_position)
             .field("write_buffer", &self.write_buffer)
+            .field("pre_write_buffer", &self.pre_write_buffer)
             .field("closed", &self.closed)
             .finish()
     }
@@ -66,6 +68,7 @@ impl TcpCommunicator {
             read_buffer: vec![0; max_message_size], // never resize this vec
             read_position: 0,
             write_buffer: Vec::with_capacity(max_message_size),
+            pre_write_buffer: vec![0; max_message_size],
             closed: false,
         }
     }
@@ -156,9 +159,8 @@ impl TcpCommunicator {
 
         // write all queued requests
         if !self.write_queue.is_empty() {
-            let mut holder = vec![0u8; self.max_message_size];
             for message in self.write_queue.drain(..) {
-                match postcard::to_slice_cobs(&message, &mut holder) {
+                match postcard::to_slice_cobs(&message, &mut self.pre_write_buffer) {
                     Ok(slice) => self.write_buffer.extend_from_slice(slice),
                     Err(e) => return Err(TcpCommunicatorError::WriteSerializeError(e)),
                 }

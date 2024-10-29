@@ -1364,6 +1364,7 @@ dependencies = [
  "postcard",
  "serde",
  "thiserror",
+ "typetag",
 ]
 
 [[package]]

@@ -1,11 +1,26 @@
 use crate::entity::EntityId;
 use derive_more::*;
+use serde::{Deserialize, Serialize};
 use std::{any::Any, collections::VecDeque, fmt, mem};
 
-pub use hydrogen_ecs_proc_macro::Component;
+pub use hydrogen_ecs_proc_macro::{Component, SerializableComponent};
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, From, Into, Add, AddAssign, Sub, SubAssign,
+    Debug,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    From,
+    Into,
+    Add,
+    AddAssign,
+    Sub,
+    SubAssign,
 )]
 pub struct ComponentId(pub u64);
 
@@ -13,6 +28,9 @@ pub trait Component: fmt::Debug + Any + 'static {
     fn component_id(&self) -> ComponentId;
     fn display_name(&self) -> &'static str;
 }
+
+#[typetag::serde(tag = "type")]
+pub trait SerializableComponent: Component {}
 
 #[derive(Debug)]
 pub struct ComponentSet {

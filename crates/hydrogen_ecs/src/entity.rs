@@ -1,6 +1,21 @@
 use derive_more::*;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, From, Into, Add, AddAssign, Sub, SubAssign)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    From,
+    Into,
+    Add,
+    AddAssign,
+    Sub,
+    SubAssign,
+)]
 pub struct EntityId(pub u32);
 
 impl From<usize> for EntityId {

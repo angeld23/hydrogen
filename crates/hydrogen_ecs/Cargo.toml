@@ -36,3 +36,4 @@ serde = "1.0.209"
 thiserror = "1.0.63"
 hydrogen_ecs_proc_macro = { path = "../hydrogen_ecs_proc_macro" }
 aligned-vec = "0.6.1"
+typetag = "0.2.18"

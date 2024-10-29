@@ -32,3 +32,21 @@ pub fn component(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         }
     }.into()
 }
+
+#[proc_macro_derive(SerializableComponent, attributes(local_component))]
+pub fn serializable_component(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let DeriveInput {
+        attrs: _,
+        vis: _,
+        ident,
+        generics,
+        data: _,
+    } = parse_macro_input!(input as DeriveInput);
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+    quote! {
+        #[typetag::serde]
+        impl #impl_generics hydrogen_ecs::component::SerializableComponent for #ident #ty_generics #where_clause {}
+    }.into()
+}
