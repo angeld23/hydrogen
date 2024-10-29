@@ -1,19 +1,21 @@
+use std::collections::BTreeSet;
+
 use derive_more::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, IsVariant, Unwrap, TryUnwrap)]
-pub enum Selection<T> {
-    Whitelist(Vec<T>),
-    Blacklist(Vec<T>),
+pub enum Selection<T: Ord> {
+    Whitelist(BTreeSet<T>),
+    Blacklist(BTreeSet<T>),
 }
 
-impl<T> Selection<T> {
+impl<T: Ord> Selection<T> {
     pub fn none() -> Self {
-        Self::Whitelist(vec![])
+        Self::Whitelist(BTreeSet::new())
     }
 
     pub fn all() -> Self {
-        Self::Blacklist(vec![])
+        Self::Blacklist(BTreeSet::new())
     }
 
     pub fn contains(&self, value: &T) -> bool
@@ -26,48 +28,17 @@ impl<T> Selection<T> {
         }
     }
 
-    pub fn get_values(&self) -> &Vec<T> {
+    pub fn get_values(&self) -> &BTreeSet<T> {
         match self {
             Selection::Whitelist(values) => values,
             Selection::Blacklist(values) => values,
         }
     }
 
-    pub fn get_values_mut(&mut self) -> &mut Vec<T> {
+    pub fn get_values_mut(&mut self) -> &mut BTreeSet<T> {
         match self {
             Selection::Whitelist(values) => values,
             Selection::Blacklist(values) => values,
         }
-    }
-
-    pub fn insert(&mut self, value: T) -> bool
-    where
-        T: PartialEq,
-    {
-        let values = self.get_values_mut();
-
-        if !values.contains(&value) {
-            values.push(value);
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn remove(&mut self, value: &T) -> Option<T>
-    where
-        T: PartialEq,
-    {
-        let values = self.get_values_mut();
-
-        let mut found_index: Option<usize> = None;
-        for (i, other_value) in values.iter().enumerate() {
-            if other_value == value {
-                found_index = Some(i);
-                break;
-            }
-        }
-
-        found_index.map(|i| values.swap_remove(i))
     }
 }
