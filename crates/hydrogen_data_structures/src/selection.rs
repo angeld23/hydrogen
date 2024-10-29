@@ -25,4 +25,21 @@ impl<T> Selection<T> {
             Selection::Blacklist(values) => !values.contains(value),
         }
     }
+
+    pub fn insert(&mut self, value: T) -> bool
+    where
+        T: PartialEq,
+    {
+        let values = match self {
+            Selection::Whitelist(values) => values,
+            Selection::Blacklist(values) => values,
+        };
+
+        if !values.contains(&value) {
+            values.push(value);
+            true
+        } else {
+            false
+        }
+    }
 }
