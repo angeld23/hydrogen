@@ -1,5 +1,6 @@
 use crate::entity::EntityId;
 use derive_more::*;
+use dyn_clone::DynClone;
 use serde::{Deserialize, Serialize};
 use std::{any::Any, collections::VecDeque, fmt, mem};
 
@@ -29,8 +30,47 @@ pub trait Component: fmt::Debug + Any + 'static {
     fn display_name(&self) -> &'static str;
 }
 
+pub trait AsAny {
+    fn as_any(&self) -> &dyn Any;
+}
+
+impl<T> AsAny for T
+where
+    T: Any,
+{
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+pub trait DynPartialEq: AsAny {
+    fn dyn_eq(&self, other: &dyn Any) -> bool;
+}
+
+impl<T> DynPartialEq for T
+where
+    T: PartialEq<T> + 'static,
+{
+    fn dyn_eq(&self, other: &dyn Any) -> bool {
+        other.downcast_ref::<T>().map_or(false, |item| self == item)
+    }
+}
+
+impl PartialEq for Box<dyn DynPartialEq> {
+    fn eq(&self, other: &Self) -> bool {
+        (**self).dyn_eq((**other).as_any())
+    }
+}
+
 #[typetag::serde(tag = "type")]
-pub trait SerializableComponent: Component {}
+pub trait SerializableComponent: Component + DynClone + DynPartialEq {}
+dyn_clone::clone_trait_object!(SerializableComponent);
+
+impl PartialEq for Box<dyn SerializableComponent> {
+    fn eq(&self, other: &Self) -> bool {
+        (**self).dyn_eq((**other).as_any())
+    }
+}
 
 #[derive(Debug)]
 pub struct ComponentSet {

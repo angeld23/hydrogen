@@ -9,6 +9,8 @@ use serde::{Deserialize, Serialize};
     Deserialize,
     PartialEq,
     Eq,
+    PartialOrd,
+    Ord,
     From,
     Into,
     Add,

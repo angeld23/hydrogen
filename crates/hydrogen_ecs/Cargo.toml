@@ -35,5 +35,8 @@ postcard = { version = "1.0.10", features = ["alloc"] }
 serde = "1.0.209"
 thiserror = "1.0.63"
 hydrogen_ecs_proc_macro = { path = "../hydrogen_ecs_proc_macro" }
+hydrogen_net = { path = "../hydrogen_net" }
+hydrogen_data_structures = { path = "../hydrogen_data_structures" }
 aligned-vec = "0.6.1"
 typetag = "0.2.18"
+dyn-clone = "1.0.17"

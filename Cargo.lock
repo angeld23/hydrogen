@@ -831,6 +831,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "dyn-clone"
+version = "1.0.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d6ef0072f8a535281e4876be788938b528e9a1d43900b82c2569af7da799125"
+
+[[package]]
 name = "either"
 version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1359,7 +1365,10 @@ dependencies = [
  "aligned-vec 0.6.1",
  "anyhow",
  "derive_more",
+ "dyn-clone",
+ "hydrogen_data_structures",
  "hydrogen_ecs_proc_macro",
+ "hydrogen_net",
  "paste",
  "postcard",
  "serde",
@@ -1438,7 +1447,6 @@ dependencies = [
  "env_logger",
  "erased-serde",
  "hydrogen_data_structures",
- "hydrogen_ecs",
  "hydrogen_net_proc_macro",
  "log",
  "postcard",

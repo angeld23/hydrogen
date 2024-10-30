@@ -41,4 +41,18 @@ impl<T: Ord> Selection<T> {
             Selection::Blacklist(values) => values,
         }
     }
+
+    pub fn forbid(&mut self, value: T) -> bool {
+        match self {
+            Selection::Whitelist(values) => values.remove(&value),
+            Selection::Blacklist(values) => values.insert(value),
+        }
+    }
+
+    pub fn allow(&mut self, value: T) -> bool {
+        match self {
+            Selection::Whitelist(values) => values.insert(value),
+            Selection::Blacklist(values) => values.remove(&value),
+        }
+    }
 }
