@@ -1366,6 +1366,7 @@ dependencies = [
  "anyhow",
  "derive_more",
  "dyn-clone",
+ "hydrogen_core",
  "hydrogen_data_structures",
  "hydrogen_ecs_proc_macro",
  "hydrogen_net",

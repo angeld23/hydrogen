@@ -77,6 +77,10 @@ impl TcpCommunicator {
         self.write_queue.push_back(Box::new(data));
     }
 
+    pub fn send_boxed(&mut self, data: Box<dyn NetMessage>) {
+        self.write_queue.push_back(data);
+    }
+
     pub fn recv(&mut self) -> Option<Box<dyn NetMessage>> {
         self.read_queue.pop_front()
     }

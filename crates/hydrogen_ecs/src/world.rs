@@ -1,5 +1,7 @@
+use hydrogen_core::dyn_util::AsAny;
+
 use crate::{
-    component::{Component, ComponentId, ComponentSet},
+    component::{Component, ComponentId, ComponentSet, SerializableComponent},
     entity::EntityId,
 };
 use std::{array, collections::BTreeMap};
@@ -69,6 +71,36 @@ impl World {
             .iter_mut()
             .filter_map(move |(&component_id, component_set)| {
                 Some((component_id, component_set.get_mut(entity_id)?))
+            })
+    }
+
+    pub fn get_all_serializable_components(
+        &self,
+        entity_id: EntityId,
+    ) -> impl Iterator<Item = (ComponentId, &Box<dyn SerializableComponent>)> {
+        self.get_all_components(entity_id)
+            .filter_map(|(component_id, component)| {
+                Some((
+                    component_id,
+                    component
+                        .as_any()
+                        .downcast_ref::<Box<dyn SerializableComponent>>()?,
+                ))
+            })
+    }
+
+    pub fn get_all_serializable_components_mut(
+        &mut self,
+        entity_id: EntityId,
+    ) -> impl Iterator<Item = (ComponentId, &mut Box<dyn SerializableComponent>)> {
+        self.get_all_components_mut(entity_id)
+            .filter_map(|(component_id, component)| {
+                Some((
+                    component_id,
+                    component
+                        .as_any_mut()
+                        .downcast_mut::<Box<dyn SerializableComponent>>()?,
+                ))
             })
     }
 

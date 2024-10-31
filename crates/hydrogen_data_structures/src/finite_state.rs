@@ -4,6 +4,7 @@
 //! an object's properties to be stored as a single integer.
 //!
 //! TODO: This whole system is kinda janky, especially with serialization of StringEnum. I should probably rework it.
+//! TODO: nuh uh
 
 use derive_more::*;
 use linear_map::set::LinearSet;
