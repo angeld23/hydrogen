@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use derive_more::*;
+use hydrogen_core::dyn_util::AsAny;
 use hydrogen_data_structures::selection::Selection;
 use hydrogen_net::{
     comm::{NetMessage, TcpCommunicator},
@@ -149,5 +150,31 @@ impl EcsServerReplicator {
                 }
             }
         }
+    }
+
+    pub fn replicate(
+        &mut self,
+        world: &mut World,
+        comm: &mut TcpCommunicator,
+        entity_id: EntityId,
+        component_id: ComponentId,
+    ) -> bool {
+        if let Some(component) = world.get_component(entity_id, component_id) {
+            if let Some(serializeable_component) = component
+                .as_any()
+                .downcast_ref::<Box<dyn SerializableComponent>>()
+            {
+                comm.send(NetEcsCommand::SetComponent(
+                    entity_id.into(),
+                    serializeable_component.clone(),
+                ));
+                self.current_entities
+                    .entry(entity_id.into())
+                    .or_default()
+                    .insert(component_id, serializeable_component.clone());
+                return true;
+            }
+        }
+        false
     }
 }
