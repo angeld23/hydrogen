@@ -1,4 +1,3 @@
-use crate as hydrogen_core;
 use crate::input::InputController;
 use hydrogen_core_proc_macro::DependencyProvider;
 use hydrogen_graphics::graphics_controller::GraphicsController;
@@ -12,6 +11,10 @@ use winit::{
     event_loop::ActiveEventLoop,
     window::{CursorGrabMode, Window, WindowId},
 };
+
+mod hydrogen {
+    pub use crate as core;
+}
 
 #[derive(Debug, Clone, Copy)]
 pub enum WinitEvent<'a> {

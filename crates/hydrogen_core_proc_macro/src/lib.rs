@@ -37,7 +37,7 @@ pub fn dependency(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         let has_dep_mut = has_empty_attribute(field, "dep_mut");
 
         let dep_impl = quote! {
-            impl #impl_generics hydrogen_core::dependency::Dependency<#ty> for #ident #ty_generics #where_clause {
+            impl #impl_generics hydrogen::core::dependency::Dependency<#ty> for #ident #ty_generics #where_clause {
                 fn dep(&self) -> &#ty {
                     &self.#name
                 }
@@ -45,7 +45,7 @@ pub fn dependency(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         };
 
         let dep_mut_impl = quote! {
-            impl #impl_generics hydrogen_core::dependency::DependencyMut<#ty> for #ident #ty_generics #where_clause {
+            impl #impl_generics hydrogen::core::dependency::DependencyMut<#ty> for #ident #ty_generics #where_clause {
                 fn dep_mut(&mut self) -> &mut #ty {
                     &mut self.#name
                 }

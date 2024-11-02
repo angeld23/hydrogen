@@ -17,6 +17,11 @@ use crate::{
     world::World,
 };
 
+mod hydrogen {
+    pub use crate as ecs;
+    pub use hydrogen_net as net;
+}
+
 #[derive(
     Debug,
     Clone,

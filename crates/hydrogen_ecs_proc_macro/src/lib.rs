@@ -18,13 +18,13 @@ pub fn component(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 
     quote! {
         impl #impl_generics #ident #ty_generics #where_clause {
-            pub const COMPONENT_ID: hydrogen_ecs::component::ComponentId = hydrogen_ecs::component::ComponentId(#component_id);
+            pub const COMPONENT_ID: hydrogen::ecs::component::ComponentId = hydrogen::ecs::component::ComponentId(#component_id);
             pub const DISPLAY_NAME: &'static str = #display_name;
         }
 
-        impl #impl_generics hydrogen_ecs::component::Component for #ident #ty_generics #where_clause {
-            fn component_id(&self) -> hydrogen_ecs::component::ComponentId {
-                hydrogen_ecs::component::ComponentId(#component_id)
+        impl #impl_generics hydrogen::ecs::component::Component for #ident #ty_generics #where_clause {
+            fn component_id(&self) -> hydrogen::ecs::component::ComponentId {
+                hydrogen::ecs::component::ComponentId(#component_id)
             }
             fn display_name(&self) -> &'static str {
                 #display_name
@@ -47,6 +47,6 @@ pub fn serializable_component(input: proc_macro::TokenStream) -> proc_macro::Tok
 
     quote! {
         #[typetag::serde]
-        impl #impl_generics hydrogen_ecs::component::SerializableComponent for #ident #ty_generics #where_clause {}
+        impl #impl_generics hydrogen::ecs::component::SerializableComponent for #ident #ty_generics #where_clause {}
     }.into()
 }

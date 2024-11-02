@@ -14,7 +14,7 @@ pub fn net_message(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
     quote! {
         #[typetag::serde]
-        impl #impl_generics NetMessage for #ident #ty_generics #where_clause {
+        impl #impl_generics hydrogen::net::comm::NetMessage for #ident #ty_generics #where_clause {
 
         }
     }
