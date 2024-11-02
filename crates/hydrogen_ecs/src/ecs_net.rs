@@ -132,7 +132,7 @@ impl EcsServerReplicator {
             }
         }
 
-        // process any request deletions of entities and components
+        // process any requested deletions of entities and components
 
         for server_entity_id in entities_to_delete {
             if self.current_entities.remove(&server_entity_id).is_some() {
