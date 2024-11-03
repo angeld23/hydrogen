@@ -5,7 +5,7 @@ use std::{
 };
 
 #[derive(Debug, Clone)]
-pub struct Event<T> {
+struct Event<T> {
     inner: Arc<T>,
     sent_at: Instant,
     index: u32,
