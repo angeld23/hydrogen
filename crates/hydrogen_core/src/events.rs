@@ -58,11 +58,11 @@ impl<T> EventSender<T> {
         }
     }
 
-    pub fn send(&self, event: T) {
+    pub fn send(&self, event: impl Into<Arc<T>>) {
         let mut next_index = self.next_index.lock().unwrap();
         let mut events = self.events.lock().unwrap();
         events.push_back(Event {
-            inner: Arc::new(event),
+            inner: event.into(),
             sent_at: Instant::now(),
             index: *next_index,
         });
