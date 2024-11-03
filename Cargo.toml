@@ -1,6 +1,6 @@
 [package]
 name = "hydrogen"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 [workspace]
@@ -15,5 +15,5 @@ hydrogen_gui = { path = "crates/hydrogen_gui" }
 hydrogen_ecs = { path = "crates/hydrogen_ecs" }
 hydrogen_net = { path = "crates/hydrogen_net" }
 winit = "0.30.5"
-anyhow = "1.0.91"
+anyhow = "1.0.92"
 env_logger = "0.11.5"

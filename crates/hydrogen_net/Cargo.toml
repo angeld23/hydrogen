@@ -39,4 +39,5 @@ typetag = "0.2.18"
 serde = "1.0.213"
 hydrogen_net_proc_macro = { path = "../hydrogen_net_proc_macro" }
 hydrogen_data_structures = { path = "../hydrogen_data_structures" }
+hydrogen_core = { path = "../hydrogen_core" }
 thiserror = "1.0.65"

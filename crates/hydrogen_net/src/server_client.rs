@@ -1,8 +1,9 @@
 use derive_more::*;
+use hydrogen_core::events::EventSender;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::{BTreeMap, VecDeque},
+    collections::BTreeMap,
     io,
     net::{SocketAddr, TcpListener},
 };
@@ -55,7 +56,7 @@ pub struct Server {
     pub connected_clients: BTreeMap<ClientId, ConnectedClient>,
     pub tcp_listener: TcpListener,
     pub max_message_size: usize,
-    pub events: VecDeque<ServerEvent>,
+    pub events: EventSender<ServerEvent>,
 }
 
 impl Server {
@@ -67,7 +68,7 @@ impl Server {
             connected_clients: BTreeMap::new(),
             tcp_listener,
             max_message_size,
-            events: VecDeque::new(),
+            events: Default::default(),
         })
     }
 
@@ -88,7 +89,7 @@ impl Server {
                         },
                     );
 
-                    self.events.push_back(ServerEvent::ClientAdded(client_id));
+                    self.events.send(ServerEvent::ClientAdded(client_id));
                 }
                 Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
                     break 'accept_connection_loop;
@@ -105,7 +106,7 @@ impl Server {
     pub fn remove_client(&mut self, client_id: ClientId) -> bool {
         if let Some(mut client) = self.connected_clients.remove(&client_id) {
             client.comm.close();
-            self.events.push_back(ServerEvent::ClientRemoved(client));
+            self.events.send(ServerEvent::ClientRemoved(client));
 
             return true;
         }
@@ -113,7 +114,7 @@ impl Server {
         false
     }
 
-    pub fn update(&mut self) -> Result<(), io::Error> {
+    pub fn update(&mut self) -> io::Result<()> {
         self.accept_connections()?;
 
         let mut clients_to_remove = Vec::<ClientId>::new();
@@ -122,7 +123,7 @@ impl Server {
                 clients_to_remove.push(client.client_id);
             } else if let Err(e) = client.comm.update() {
                 self.events
-                    .push_back(ServerEvent::ClientCommUpdateError(client.client_id, e));
+                    .send(ServerEvent::ClientCommUpdateError(client.client_id, e));
             }
         }
 
