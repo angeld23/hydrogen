@@ -204,3 +204,50 @@ impl Texture {
         }
     }
 }
+
+pub use {::image, ::include_dir};
+
+#[macro_export]
+macro_rules! import_images_from_directory {
+    ($path:literal) => {{
+        use $crate::texture::{image, include_dir};
+
+        const TEXTURE_DIR: include_dir::Dir = include_dir::include_dir!($path);
+
+        fn extract_files<'a>(
+            out: &mut Vec<include_dir::File<'a>>,
+            entry: include_dir::DirEntry<'a>,
+        ) {
+            match entry {
+                include_dir::DirEntry::Dir(dir) => {
+                    for child_entry in dir.entries() {
+                        extract_files(out, child_entry.to_owned());
+                    }
+                }
+                include_dir::DirEntry::File(file) => out.push(file),
+            }
+        }
+
+        let mut files = Vec::<include_dir::File>::new();
+        for entry in TEXTURE_DIR.entries() {
+            extract_files(&mut files, entry.to_owned());
+        }
+
+        let mut images = ::std::collections::BTreeMap::new();
+
+        for file in files {
+            if let Ok(img) = image::load_from_memory(file.contents()) {
+                images.insert(
+                    file.path()
+                        .file_stem()
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string(),
+                    img,
+                );
+            }
+        }
+
+        images
+    }};
+}
