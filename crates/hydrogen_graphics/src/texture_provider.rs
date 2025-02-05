@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use crate::{
     binding::BindedTexture,
     gpu_handle::GpuHandle,
@@ -7,13 +9,12 @@ use hydrogen_math::{
     rect::{OrientedSection, PackedSection},
     rect_packer::{PackResult, RectPacker},
 };
-use linear_map::LinearMap;
 
 #[derive(Debug)]
 pub struct TextureProvider {
     main_texture: BindedTexture,
-    texture_sections: LinearMap<String, PackedSection>,
-    reserved_textures: LinearMap<String, wgpu::Texture>,
+    texture_sections: BTreeMap<String, PackedSection>,
+    reserved_textures: BTreeMap<String, wgpu::Texture>,
     packer: RectPacker,
     handle: GpuHandle,
 }

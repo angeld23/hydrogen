@@ -1,21 +1,22 @@
+use std::collections::BTreeMap;
+
 use crate::{
     bounding_box::bbox,
     rect::{rect_fits, PackedSection},
 };
 use cgmath::{vec2, Array, Vector2};
-use linear_map::LinearMap;
 
 #[derive(Debug, Clone)]
 pub struct RectPacker {
     layer_size: Vector2<u32>,
-    slots: LinearMap<String, Vector2<u32>>,
+    slots: BTreeMap<String, Vector2<u32>>,
     padding: u32,
 }
 
 #[derive(Debug, Clone)]
 pub struct PackResult {
     pub total_layers: u32,
-    pub sections: LinearMap<String, PackedSection>,
+    pub sections: BTreeMap<String, PackedSection>,
 }
 
 impl RectPacker {
@@ -42,10 +43,10 @@ impl RectPacker {
     }
 
     pub fn pack(self) -> PackResult {
-        let mut slots: Vec<(String, Vector2<u32>)> = self.slots.into();
+        let mut slots: Vec<(String, Vector2<u32>)> = self.slots.into_iter().collect();
         slots.sort_by(|(_, size_0), (_, size_1)| size_1.product().cmp(&size_0.product()));
 
-        let mut sections = LinearMap::<String, PackedSection>::new();
+        let mut sections = BTreeMap::<String, PackedSection>::new();
 
         let mut current_layer = 0;
 

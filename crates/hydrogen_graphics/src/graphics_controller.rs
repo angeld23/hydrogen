@@ -9,8 +9,7 @@ use crate::{
 };
 use anyhow::{anyhow, Result};
 use hydrogen_math::bbox;
-use linear_map::LinearMap;
-use std::{rc::Rc, sync::Arc};
+use std::{collections::BTreeMap, rc::Rc, sync::Arc};
 use winit::{dpi::PhysicalSize, window::Window};
 
 #[derive(Debug)]
@@ -25,7 +24,7 @@ pub struct GraphicsController {
     present_vertices: GpuVec<Vertex2D>,
     present_indices: GpuVec<u32>,
 
-    render_targets: LinearMap<&'static str, Rc<RenderTarget>>,
+    render_targets: BTreeMap<&'static str, Rc<RenderTarget>>,
 }
 
 impl GraphicsController {
@@ -97,7 +96,7 @@ impl GraphicsController {
             present_vertices,
             present_indices,
 
-            render_targets: LinearMap::new(),
+            render_targets: BTreeMap::new(),
         };
 
         controller.present_pipeline = Some(Pipeline::new(
