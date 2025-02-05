@@ -37,7 +37,7 @@ bytemuck = { version = "1.16.0", features = ["derive"] }
 anyhow = "1.0.86"
 linear-map = "1.2.0"
 include_dir = "0.7.4"
-winit = "0.30.3"
+winit = "0.30.4"
 hydrogen_math = { path = "../hydrogen_math" }
 serde = "1.0.204"
 hydrogen_data_structures = { path = "../hydrogen_data_structures" }
