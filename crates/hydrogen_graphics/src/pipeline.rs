@@ -14,11 +14,11 @@ pub struct PipelineDescriptor {
 
     pub shader_source: &'static str,
 
-    pub vertex_shader_entry_point: &'static str,
+    pub vertex_shader_entry_point: Option<&'static str>,
     pub vertex_format: &'static [wgpu::VertexFormat],
     pub instance_format: Option<&'static [wgpu::VertexFormat]>,
 
-    pub fragment_shader_entry_point: &'static str,
+    pub fragment_shader_entry_point: Option<&'static str>,
     pub target_format: Option<wgpu::TextureFormat>,
 
     pub bind_groups: &'static [&'static BindGroupFormat],
@@ -34,11 +34,11 @@ impl Default for PipelineDescriptor {
 
             shader_source: "",
 
-            vertex_shader_entry_point: "vert_main",
+            vertex_shader_entry_point: None,
             vertex_format: &[],
             instance_format: None,
 
-            fragment_shader_entry_point: "frag_main",
+            fragment_shader_entry_point: None,
             target_format: None,
 
             bind_groups: &[],

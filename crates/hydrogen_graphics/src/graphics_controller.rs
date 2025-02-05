@@ -30,7 +30,7 @@ pub struct GraphicsController {
 
 impl GraphicsController {
     pub fn new(window: Arc<Window>) -> Result<Self> {
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
             ..Default::default()
         });
@@ -108,14 +108,14 @@ impl GraphicsController {
             PipelineDescriptor {
                 name: "Present to Screen",
                 shader_source: include_str!("present.wgsl"),
-                vertex_shader_entry_point: "vert_main",
                 vertex_format: Vertex2D::VERTEX_FORMAT,
                 instance_format: None,
-                fragment_shader_entry_point: "frag_main",
                 target_format: Some(window_surface_format),
                 bind_groups: &[Texture::STANDARD_BIND_GROUP_LAYOUT],
                 use_depth: false,
                 alpha_to_coverage_enabled: false,
+
+                ..Default::default()
             },
         ));
 
