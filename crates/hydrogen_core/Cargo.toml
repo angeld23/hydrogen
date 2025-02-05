@@ -7,7 +7,7 @@ edition = "2021"
 cgmath = "0.18.0"
 linear-map = "1.2.0"
 serde = "1.0.204"
-winit = "0.30.4"
+winit = "0.30.8"
 hydrogen_math = { path = "../hydrogen_math" }
 derive_more = { version = "2.0.1", features = [
     "add",
