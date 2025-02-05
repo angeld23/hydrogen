@@ -79,14 +79,14 @@ impl ComponentSet {
         let index = entity_id.0 as usize;
 
         let component_index = self.entity_component_indices.get(index)?.to_owned()?;
-        return self.components.get(component_index)?.as_ref();
+        self.components.get(component_index)?.as_ref()
     }
 
     pub fn get_mut(&mut self, entity_id: EntityId) -> Option<&mut Box<dyn Component>> {
         let index = entity_id.0 as usize;
 
         let component_index = self.entity_component_indices.get(index)?.to_owned()?;
-        return self.components.get_mut(component_index)?.as_mut();
+        self.components.get_mut(component_index)?.as_mut()
     }
 
     pub fn set(

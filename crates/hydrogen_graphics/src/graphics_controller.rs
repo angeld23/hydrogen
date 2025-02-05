@@ -15,7 +15,7 @@ use winit::{dpi::PhysicalSize, window::Window};
 
 #[derive(Debug)]
 pub struct GraphicsController {
-    handle: Arc<GpuHandle>,
+    handle: GpuHandle,
 
     window_surface: wgpu::Surface<'static>,
     window_surface_config: wgpu::SurfaceConfiguration,
@@ -76,18 +76,15 @@ impl GraphicsController {
         };
         window_surface.configure(&device, &window_surface_config);
 
-        let handle = Arc::new(GpuHandle { device, queue });
+        let handle = GpuHandle { device, queue };
 
         let present_vertices = GpuVec::new(
-            Arc::clone(&handle),
+            &handle,
             wgpu::BufferUsages::VERTEX,
             Vertex2D::fill_screen(RGBA::WHITE, bbox!([0.0, 0.0], [1.0, 1.0])).to_vec(),
         );
-        let present_indices = GpuVec::new(
-            Arc::clone(&handle),
-            wgpu::BufferUsages::INDEX,
-            vec![0, 1, 2, 2, 3, 0],
-        );
+        let present_indices =
+            GpuVec::new(&handle, wgpu::BufferUsages::INDEX, vec![0, 1, 2, 2, 3, 0]);
 
         let mut controller = Self {
             handle,
@@ -124,10 +121,6 @@ impl GraphicsController {
 
     pub fn handle(&self) -> &GpuHandle {
         &self.handle
-    }
-
-    pub fn handle_arc(&self) -> Arc<GpuHandle> {
-        Arc::clone(&self.handle)
     }
 
     pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
@@ -230,7 +223,7 @@ impl GraphicsController {
     where
         T: bytemuck::NoUninit,
     {
-        GpuVec::new(self.handle_arc(), usage, contents)
+        GpuVec::new(&self.handle, usage, contents)
     }
 
     pub fn vertex_vec<T>(&self, contents: Vec<T>) -> GpuVec<T>

@@ -6,10 +6,10 @@ use crate::{
 use futures::{channel::oneshot, executor};
 use image::RgbaImage;
 
-/// A handle to both a [wgpu::Device] and a [wgpu::Queue]. Most often wrapped in a reference-counted pointer.
+/// A handle to both a [wgpu::Device] and a [wgpu::Queue].
 ///
 /// Contains useful wrapper functions for various operations performed using the device and queue.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GpuHandle {
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
@@ -110,9 +110,9 @@ impl GpuHandle {
         });
         encoder.copy_texture_to_buffer(
             texture.as_image_copy(),
-            wgpu::ImageCopyBuffer {
+            wgpu::TexelCopyBufferInfo {
                 buffer: &buffer,
-                layout: wgpu::ImageDataLayout {
+                layout: wgpu::TexelCopyBufferLayout {
                     offset: 0,
                     bytes_per_row: Some(size.width * 4),
                     rows_per_image: None,

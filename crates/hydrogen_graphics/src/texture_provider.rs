@@ -8,7 +8,6 @@ use hydrogen_math::{
     rect_packer::{PackResult, RectPacker},
 };
 use linear_map::LinearMap;
-use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct TextureProvider {
@@ -16,7 +15,7 @@ pub struct TextureProvider {
     texture_sections: LinearMap<String, PackedSection>,
     reserved_textures: LinearMap<String, wgpu::Texture>,
     packer: RectPacker,
-    handle: Arc<GpuHandle>,
+    handle: GpuHandle,
 }
 
 impl TextureProvider {
@@ -40,12 +39,12 @@ impl TextureProvider {
         }
     }
 
-    pub fn new(handle: Arc<GpuHandle>) -> Self {
+    pub fn new(handle: &GpuHandle) -> Self {
         Self {
             main_texture: handle.binded_texture(
                 &handle.create_bind_group_layout(Texture::ARRAY_BIND_GROUP_LAYOUT),
                 Texture::new(
-                    &handle,
+                    handle,
                     &Self::texture_descriptor(1),
                     &texture::SAMPLER_PIXELATED,
                 ),
@@ -57,7 +56,7 @@ impl TextureProvider {
                 Self::TEXTURE_SIDE_LENGTH,
                 Self::PADDING,
             ),
-            handle,
+            handle: handle.clone(),
         }
     }
 
@@ -139,7 +138,7 @@ impl TextureProvider {
 
                 encoder.copy_texture_to_texture(
                     texture.as_image_copy(),
-                    wgpu::ImageCopyTexture {
+                    wgpu::TexelCopyTextureInfo {
                         texture: &self.main_texture.texture.inner_texture,
                         mip_level: 0,
                         origin: wgpu::Origin3d {

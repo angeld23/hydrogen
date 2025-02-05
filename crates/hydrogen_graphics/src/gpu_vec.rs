@@ -1,5 +1,5 @@
 use crate::gpu_handle::GpuHandle;
-use std::{mem, ops::Range, sync::Arc};
+use std::{mem, ops::Range};
 use wgpu::util::DeviceExt;
 
 #[derive(Debug)]
@@ -7,7 +7,7 @@ pub struct GpuVec<T>
 where
     T: bytemuck::NoUninit,
 {
-    handle: Arc<GpuHandle>,
+    handle: GpuHandle,
 
     inner_buffer: wgpu::Buffer,
     inner_vec: Vec<T>,
@@ -40,15 +40,15 @@ where
             })
     }
 
-    pub fn new(handle_arc: Arc<GpuHandle>, usage: wgpu::BufferUsages, contents: Vec<T>) -> Self {
+    pub fn new(handle: &GpuHandle, usage: wgpu::BufferUsages, contents: Vec<T>) -> Self {
         assert!(
             mem::size_of::<T>() > 0,
             "Element type must not be zero-sized"
         );
 
-        let inner_buffer = Self::create_buffer(&handle_arc, usage, &contents);
+        let inner_buffer = Self::create_buffer(handle, usage, &contents);
         Self {
-            handle: handle_arc,
+            handle: handle.clone(),
 
             inner_buffer,
             inner_vec: contents,
@@ -227,11 +227,7 @@ where
     T: bytemuck::NoUninit,
 {
     fn clone(&self) -> Self {
-        Self::new(
-            Arc::clone(&self.handle),
-            self.usage(),
-            self.inner_vec.clone(),
-        )
+        Self::new(&self.handle, self.usage(), self.inner_vec.clone())
     }
 }
 

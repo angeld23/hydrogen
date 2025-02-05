@@ -5,7 +5,7 @@ use crate::{
     graphics_controller::GraphicsController,
     texture::Texture,
 };
-use std::{marker::PhantomData, sync::Arc};
+use std::marker::PhantomData;
 use wgpu::util::DeviceExt;
 
 #[derive(Debug, Clone)]
@@ -80,7 +80,7 @@ where
     pub indices: Option<&'a GpuVec<u32>>,
 }
 
-impl<'a, V, I> IntoIterator for PipelineBuffers<'a, V, I>
+impl<V, I> IntoIterator for PipelineBuffers<'_, V, I>
 where
     V: bytemuck::NoUninit,
     I: bytemuck::NoUninit,
@@ -100,7 +100,7 @@ where
     V: bytemuck::NoUninit,
     I: bytemuck::NoUninit,
 {
-    pub(crate) handle: Arc<GpuHandle>,
+    pub(crate) handle: GpuHandle,
     pub(crate) descriptor: PipelineDescriptor,
     pub(crate) gpu_pipeline: wgpu::RenderPipeline,
     pub(crate) shader_module: wgpu::ShaderModule,
@@ -119,7 +119,7 @@ where
     I: bytemuck::NoUninit,
 {
     pub fn new(controller: &GraphicsController, descriptor: PipelineDescriptor) -> Self {
-        let handle = controller.handle_arc();
+        let handle = controller.handle().clone();
 
         let shader_module = handle
             .device

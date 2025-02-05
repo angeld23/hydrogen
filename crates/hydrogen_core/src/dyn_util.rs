@@ -27,7 +27,7 @@ where
     T: PartialEq<T> + 'static,
 {
     fn dyn_eq(&self, other: &dyn Any) -> bool {
-        other.downcast_ref::<T>().map_or(false, |item| self == item)
+        other.downcast_ref::<T>() == Some(self)
     }
 }
 

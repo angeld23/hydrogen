@@ -1,5 +1,4 @@
 #![allow(incomplete_features, dead_code)]
-#![feature(float_next_up_down)]
 #![feature(generic_const_exprs)]
 
 pub mod axis;
