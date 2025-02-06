@@ -9,7 +9,6 @@ use hydrogen_math::{
     rect::{OrientedSection, PackedSection},
     rect_packer::{PackResult, RectPacker},
 };
-use log::warn;
 
 #[derive(Debug)]
 pub struct TextureProvider {
@@ -122,10 +121,12 @@ impl TextureProvider {
         } = packer.pack();
 
         if !sections.contains_key("fallback") {
-            warn!("Texture provider packed with no 'fallback' texture! ANY attempt to fetch a non-existent texture will result in a panic.");
+            println!("[H1 | WARN] Texture provider packed with no 'fallback' texture! ANY attempt to fetch a non-existent texture will result in a panic.");
         }
         if !sections.contains_key("font") {
-            warn!("Texture provider packed with no 'font' texture! Text cannot be displayed.");
+            println!(
+                "[H1 | WARN] Texture provider packed with no 'font' texture! Text cannot be displayed."
+            );
         }
 
         self.reset_main_texture(total_layers);
