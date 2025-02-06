@@ -1,13 +1,13 @@
 [package]
 name = "hydrogen_gui"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 [dependencies]
 cgmath = { version = "0.18.0", features = ["swizzle"] }
 clipboard-anywhere = "0.2.3"
 codepage-437 = "0.1.0"
-derive_more = { version = "1.0.0", features = [
+derive_more = { version = "2.0.1", features = [
     "add",
     "add_assign",
     "as_ref",

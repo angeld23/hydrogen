@@ -1387,13 +1387,13 @@ dependencies = [
 
 [[package]]
 name = "hydrogen_gui"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "cgmath",
  "clipboard-anywhere",
  "codepage-437",
  "color-eyre",
- "derive_more 1.0.0",
+ "derive_more 2.0.1",
  "env_logger",
  "hydrogen_core",
  "hydrogen_data_structures",

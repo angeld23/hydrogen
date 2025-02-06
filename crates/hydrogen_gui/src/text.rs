@@ -79,9 +79,9 @@ pub fn generate_char_data(atlas: &DynamicImage) -> [CharData; 256] {
 }
 
 lazy_static! {
-    pub static ref FONT_CHAR_DATA: [CharData; 256] =
-        generate_char_data(&DynamicImage::new(128, 128, image::ColorType::Rgba8)); //TEXTURE_IMAGES.get("font").unwrap());
-        // TODO: FIX THIS!!! WE NEED TEXT!!
+    pub static ref FONT_IMAGE: DynamicImage =
+        image::load_from_memory(include_bytes!("./font.png")).unwrap();
+    pub static ref FONT_CHAR_DATA: [CharData; 256] = generate_char_data(&FONT_IMAGE);
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq)]
