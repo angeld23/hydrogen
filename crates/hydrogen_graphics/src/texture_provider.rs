@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use crate::{
     binding::BindedTexture,
     gpu_handle::GpuHandle,
-    texture::{self, Texture},
+    texture::{self, Texture, BASE_TEXTURE_IMAGES},
 };
 use hydrogen_math::{
     rect::{OrientedSection, PackedSection},
@@ -76,20 +76,16 @@ impl TextureProvider {
         self.packer.reserve(name, width, height)
     }
 
-    pub fn reserve_texture(
-        &mut self,
-        name: impl Into<String>,
-        texture: wgpu::Texture,
-    ) -> Option<wgpu::Texture> {
+    pub fn reserve_texture(&mut self, name: impl Into<String>, texture: &wgpu::Texture) -> bool {
         let name = name.into();
         if !self
             .packer
             .reserve(&name, texture.width(), texture.height())
         {
-            Some(texture)
+            false
         } else {
-            self.reserved_textures.insert(name, texture);
-            None
+            self.reserved_textures.insert(name, texture.clone());
+            true
         }
     }
 
@@ -107,6 +103,24 @@ impl TextureProvider {
     }
 
     pub fn pack(&mut self) {
+        for (name, image) in BASE_TEXTURE_IMAGES.iter() {
+            if self.reserved_textures.contains_key(name) {
+                continue;
+            }
+
+            let texture = Texture::from_image(
+                &self.handle,
+                image,
+                &wgpu::TextureDescriptor {
+                    usage: wgpu::TextureUsages::COPY_SRC | texture::TEXTURE_IMAGE.usage,
+                    ..*texture::TEXTURE_IMAGE
+                },
+                &texture::SAMPLER_PIXELATED,
+            );
+
+            self.reserve_texture(name, &texture.inner_texture);
+        }
+
         let packer = std::mem::replace(
             &mut self.packer,
             RectPacker::new(
@@ -119,15 +133,6 @@ impl TextureProvider {
             total_layers,
             sections,
         } = packer.pack();
-
-        if !sections.contains_key("fallback") {
-            println!("[H1 | WARN] Texture provider packed with no 'fallback' texture! ANY attempt to fetch a non-existent texture will result in a panic.");
-        }
-        if !sections.contains_key("font") {
-            println!(
-                "[H1 | WARN] Texture provider packed with no 'font' texture! Text cannot be displayed."
-            );
-        }
 
         self.reset_main_texture(total_layers);
         self.texture_sections = sections;

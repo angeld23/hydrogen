@@ -5,7 +5,9 @@ use crate::{
 use cgmath::{vec2, ElementWise, Vector2};
 use codepage_437::CP437_WINGDINGS;
 use hydrogen_core::dependency::Dependency;
-use hydrogen_graphics::{color::RGBA, texture_provider::TextureProvider};
+use hydrogen_graphics::{
+    color::RGBA, texture::BASE_TEXTURE_IMAGES, texture_provider::TextureProvider,
+};
 use hydrogen_math::{bbox, bounding_box::BBox2, rect::OrientedSection};
 use image::{DynamicImage, GenericImageView};
 use lazy_static::lazy_static;
@@ -79,9 +81,8 @@ pub fn generate_char_data(atlas: &DynamicImage) -> [CharData; 256] {
 }
 
 lazy_static! {
-    pub static ref FONT_IMAGE: DynamicImage =
-        image::load_from_memory(include_bytes!("./font.png")).unwrap();
-    pub static ref FONT_CHAR_DATA: [CharData; 256] = generate_char_data(&FONT_IMAGE);
+    pub static ref FONT_CHAR_DATA: [CharData; 256] =
+        generate_char_data(BASE_TEXTURE_IMAGES.get("font").unwrap());
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq)]

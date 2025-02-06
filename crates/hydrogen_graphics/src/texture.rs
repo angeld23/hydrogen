@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 
 use crate::gpu_handle::GpuHandle;
 use image::{DynamicImage, GenericImageView};
+use include_dir::include_dir;
 use lazy_static::lazy_static;
 
 #[derive(Debug)]
@@ -240,4 +241,9 @@ pub fn import_images_from_directory(dir: include_dir::Dir) -> BTreeMap<String, D
     }
 
     images
+}
+
+lazy_static! {
+    pub static ref BASE_TEXTURE_IMAGES: BTreeMap<String, DynamicImage> =
+        import_images_from_directory(include_dir!("$CARGO_MANIFEST_DIR/src/textures"));
 }
