@@ -4,6 +4,7 @@ use crate::{
     gpu_vec::GpuVec,
     pipeline::{Pipeline, PipelineBuffers, PipelineDescriptor},
     render_target::RenderTarget,
+    shaders::SHADER_PRESENT,
     texture::Texture,
     vertex::Vertex2D,
 };
@@ -103,7 +104,7 @@ impl GraphicsController {
             &controller,
             PipelineDescriptor {
                 name: "Present to Screen",
-                shader_source: include_str!("present.wgsl"),
+                shader_source: SHADER_PRESENT,
                 vertex_format: Vertex2D::VERTEX_FORMAT,
                 instance_format: None,
                 target_format: Some(window_surface_format),

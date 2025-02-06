@@ -9,6 +9,7 @@ pub mod graphics_controller;
 pub mod indexed_vertices;
 pub mod pipeline;
 pub mod render_target;
+pub mod shaders;
 pub mod texture;
 pub mod texture_provider;
 pub mod vertex;
