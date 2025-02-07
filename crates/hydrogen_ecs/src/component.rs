@@ -37,7 +37,7 @@ pub trait Component: fmt::Debug + Any + 'static {
 }
 
 #[typetag::serde(tag = "type")]
-pub trait SerializableComponent: Component + DynClone + DynPartialEq {}
+pub trait SerializableComponent: Component + DynClone + DynPartialEq + Send + Sync {}
 dyn_clone::clone_trait_object!(SerializableComponent);
 
 impl PartialEq for Box<dyn SerializableComponent> {
