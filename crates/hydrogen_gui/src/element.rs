@@ -14,6 +14,18 @@ pub struct GuiContext<D> {
     pub dependencies: D,
 }
 
+impl GuiContext<u8> {
+    pub fn new_no_dependencies(frame: Vector2<f32>) -> Self {
+        Self {
+            frame,
+            global_frame: frame,
+            offset: vec2(0.0, 0.0),
+
+            dependencies: 0,
+        }
+    }
+}
+
 impl<D> GuiContext<D> {
     pub fn new(frame: Vector2<f32>, dependencies: D) -> Self {
         Self {

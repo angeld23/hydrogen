@@ -217,7 +217,7 @@ where
                 .device
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some(&format!("'{}' Dummy Vertex Buffer", descriptor.name)),
-                    contents: &vec![0u8; vertex_stride as usize],
+                    contents: &vec![0u8; (vertex_stride as usize).max(1)],
                     usage: wgpu::BufferUsages::VERTEX,
                 });
         let dummy_instance_buffer =
@@ -225,7 +225,7 @@ where
                 .device
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some(&format!("'{}' Dummy Instance Buffer", descriptor.name)),
-                    contents: &vec![0u8; instance_stride as usize],
+                    contents: &vec![0u8; (instance_stride as usize).max(1)],
                     usage: wgpu::BufferUsages::VERTEX,
                 });
 

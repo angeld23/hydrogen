@@ -20,6 +20,7 @@ pub struct GraphicsController {
     window_surface: wgpu::Surface<'static>,
     window_surface_config: wgpu::SurfaceConfiguration,
     window_size: PhysicalSize<u32>,
+    default_present_mode: wgpu::PresentMode,
 
     present_pipeline: Option<Pipeline<Vertex2D>>,
     present_vertices: GpuVec<Vertex2D>,
@@ -64,12 +65,13 @@ impl GraphicsController {
             .find(|f| f.is_srgb())
             .unwrap_or(window_surface_capabilities.formats[0]);
 
+        let default_present_mode = window_surface_capabilities.present_modes[0];
         let window_surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: window_surface_format,
             width: window_size.width,
             height: window_size.height,
-            present_mode: window_surface_capabilities.present_modes[0],
+            present_mode: default_present_mode,
             desired_maximum_frame_latency: 2,
             alpha_mode: window_surface_capabilities.alpha_modes[0],
             view_formats: vec![],
@@ -92,6 +94,7 @@ impl GraphicsController {
             window_surface,
             window_surface_config,
             window_size,
+            default_present_mode,
 
             present_pipeline: None,
             present_vertices,
@@ -131,6 +134,24 @@ impl GraphicsController {
         self.window_size = new_size;
         self.window_surface_config.width = new_size.width;
         self.window_surface_config.height = new_size.height;
+        self.window_surface
+            .configure(&self.handle.device, &self.window_surface_config);
+    }
+
+    pub fn is_vsync_enabled(&self) -> bool {
+        self.window_surface_config.present_mode != wgpu::PresentMode::AutoNoVsync
+    }
+
+    pub fn set_vsync_enabled(&mut self, enabled: bool) {
+        if self.is_vsync_enabled() == enabled {
+            return;
+        }
+
+        self.window_surface_config.present_mode = if enabled {
+            self.default_present_mode
+        } else {
+            wgpu::PresentMode::AutoNoVsync
+        };
         self.window_surface
             .configure(&self.handle.device, &self.window_surface_config);
     }
