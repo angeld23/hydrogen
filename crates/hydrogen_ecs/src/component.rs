@@ -1,9 +1,14 @@
 use crate::entity::EntityId;
 use derive_more::*;
 use dyn_clone::DynClone;
-use hydrogen_core::dyn_util::DynPartialEq;
+use hydrogen_core::dyn_util::{AsAny, DynPartialEq};
 use serde::{Deserialize, Serialize};
-use std::{any::Any, collections::VecDeque, fmt, mem};
+use std::{
+    any::Any,
+    array,
+    collections::{BTreeMap, VecDeque},
+    fmt, mem,
+};
 
 pub use hydrogen_ecs_proc_macro::{Component, SerializableComponent};
 
@@ -41,6 +46,7 @@ impl PartialEq for Box<dyn SerializableComponent> {
     }
 }
 
+/// The container for every instance of a given type of component in a world.
 #[derive(Debug)]
 pub struct ComponentSet {
     component_id: ComponentId,
@@ -128,4 +134,289 @@ impl ComponentSet {
 
         self.components.get_mut(component_index)?.take()
     }
+}
+
+/// A container that can be used to bundle together the components of one object, ECS entity or otherwise. Contains at most *one* of
+/// each Component type.
+#[derive(Debug, Default)]
+pub struct ComponentBundle {
+    components: BTreeMap<ComponentId, Box<dyn Component>>,
+}
+
+impl ComponentBundle {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn has_component(&self, component_id: ComponentId) -> bool {
+        self.components.contains_key(&component_id)
+    }
+
+    pub fn get_component(&self, component_id: ComponentId) -> Option<&Box<dyn Component>> {
+        self.components.get(&component_id)
+    }
+
+    pub fn get_component_mut(
+        &mut self,
+        component_id: ComponentId,
+    ) -> Option<&mut Box<dyn Component>> {
+        self.components.get_mut(&component_id)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (ComponentId, &Box<dyn Component>)> {
+        self.components
+            .iter()
+            .map(|(&id, component)| (id, component))
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (ComponentId, &mut Box<dyn Component>)> {
+        self.components
+            .iter_mut()
+            .map(|(&id, component)| (id, component))
+    }
+
+    pub fn iter_serializable(
+        &self,
+    ) -> impl Iterator<Item = (ComponentId, &Box<dyn SerializableComponent>)> {
+        self.iter().filter_map(|(component_id, component)| {
+            Some((
+                component_id,
+                component
+                    .as_any()
+                    .downcast_ref::<Box<dyn SerializableComponent>>()?,
+            ))
+        })
+    }
+
+    pub fn iter_serializable_mut(
+        &mut self,
+    ) -> impl Iterator<Item = (ComponentId, &mut Box<dyn SerializableComponent>)> {
+        self.iter_mut().filter_map(|(component_id, component)| {
+            Some((
+                component_id,
+                component
+                    .as_any_mut()
+                    .downcast_mut::<Box<dyn SerializableComponent>>()?,
+            ))
+        })
+    }
+
+    pub fn set_component<T: Component>(&mut self, component: T) -> Option<T> {
+        if let Some(old_component) = self
+            .components
+            .insert(component.component_id(), Box::new(component))
+        {
+            return Some(*Box::<(dyn std::any::Any + 'static)>::downcast::<T>(old_component).ok()?);
+        }
+
+        None
+    }
+
+    pub fn delete_component(&mut self, component_id: ComponentId) -> Option<Box<dyn Component>> {
+        self.components.remove(&component_id)
+    }
+
+    pub fn query<const WITH: usize, const WITHOUT: usize>(
+        &self,
+        with: [ComponentId; WITH],
+        without: [ComponentId; WITHOUT],
+    ) -> Option<[&Box<dyn Component>; WITH]> {
+        if with.is_empty() {
+            return None;
+        }
+
+        for &excluded_component_id in without.iter() {
+            if self.has_component(excluded_component_id) {
+                return None;
+            }
+        }
+
+        let mut component_slots: [Option<&Box<dyn Component>>; WITH] = array::from_fn(|_| None);
+        for (index, slot) in component_slots.iter_mut().enumerate() {
+            *slot = Some(self.get_component(with[index])?)
+        }
+
+        Some(array::from_fn(|index| component_slots[index].unwrap()))
+    }
+
+    pub fn query_mut<const WITH: usize, const WITHOUT: usize>(
+        &mut self,
+        with: [ComponentId; WITH],
+        without: [ComponentId; WITHOUT],
+    ) -> Option<[&mut Box<dyn Component>; WITH]> {
+        if with.is_empty() {
+            return None;
+        }
+
+        for &excluded_component_id in without.iter() {
+            if self.has_component(excluded_component_id) {
+                return None;
+            }
+        }
+
+        let mut component_slots: [Option<&mut Box<dyn Component>>; WITH] = array::from_fn(|_| None);
+        for (index, slot) in component_slots.iter_mut().enumerate() {
+            // ew
+            unsafe {
+                *slot = Some(
+                    ((self.get_component(with[index])?) as *const Box<dyn Component>
+                        as *mut Box<dyn Component>)
+                        .as_mut()?,
+                )
+            }
+        }
+
+        Some(array::from_fn(|index| {
+            component_slots[index].take().unwrap()
+        }))
+    }
+}
+
+/// A container that is nearly identical to a [`ComponentBundle`], with the one difference being that it is only able to
+/// store [`SerializableComponents`](SerializableComponent). This allows it to be serializable and
+/// implement [`Clone`] and [`PartialEq`].
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
+pub struct SerializableComponentBundle {
+    components: BTreeMap<ComponentId, Box<dyn SerializableComponent>>,
+}
+
+impl SerializableComponentBundle {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn has_component(&self, component_id: ComponentId) -> bool {
+        self.components.contains_key(&component_id)
+    }
+
+    pub fn get_component(
+        &self,
+        component_id: ComponentId,
+    ) -> Option<&Box<dyn SerializableComponent>> {
+        self.components.get(&component_id)
+    }
+
+    pub fn get_component_mut(
+        &mut self,
+        component_id: ComponentId,
+    ) -> Option<&mut Box<dyn SerializableComponent>> {
+        self.components.get_mut(&component_id)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (ComponentId, &Box<dyn SerializableComponent>)> {
+        self.components
+            .iter()
+            .map(|(&id, component)| (id, component))
+    }
+
+    pub fn iter_mut(
+        &mut self,
+    ) -> impl Iterator<Item = (ComponentId, &mut Box<dyn SerializableComponent>)> {
+        self.components
+            .iter_mut()
+            .map(|(&id, component)| (id, component))
+    }
+
+    pub fn set_component<T: SerializableComponent>(&mut self, component: T) -> Option<T> {
+        if let Some(old_component) = self
+            .components
+            .insert(component.component_id(), Box::new(component))
+        {
+            return Some(*Box::<(dyn std::any::Any + 'static)>::downcast::<T>(old_component).ok()?);
+        }
+
+        None
+    }
+
+    pub fn delete_component(
+        &mut self,
+        component_id: ComponentId,
+    ) -> Option<Box<dyn SerializableComponent>> {
+        self.components.remove(&component_id)
+    }
+
+    pub fn query<const WITH: usize, const WITHOUT: usize>(
+        &self,
+        with: [ComponentId; WITH],
+        without: [ComponentId; WITHOUT],
+    ) -> Option<[&Box<dyn SerializableComponent>; WITH]> {
+        if with.is_empty() {
+            return None;
+        }
+
+        for &excluded_component_id in without.iter() {
+            if self.has_component(excluded_component_id) {
+                return None;
+            }
+        }
+
+        let mut component_slots: [Option<&Box<dyn SerializableComponent>>; WITH] =
+            array::from_fn(|_| None);
+        for (index, slot) in component_slots.iter_mut().enumerate() {
+            *slot = Some(self.get_component(with[index])?)
+        }
+
+        Some(array::from_fn(|index| component_slots[index].unwrap()))
+    }
+
+    pub fn query_mut<const WITH: usize, const WITHOUT: usize>(
+        &mut self,
+        with: [ComponentId; WITH],
+        without: [ComponentId; WITHOUT],
+    ) -> Option<[&mut Box<dyn SerializableComponent>; WITH]> {
+        if with.is_empty() {
+            return None;
+        }
+
+        for &excluded_component_id in without.iter() {
+            if self.has_component(excluded_component_id) {
+                return None;
+            }
+        }
+
+        let mut component_slots: [Option<&mut Box<dyn SerializableComponent>>; WITH] =
+            array::from_fn(|_| None);
+        for (index, slot) in component_slots.iter_mut().enumerate() {
+            // ew
+            unsafe {
+                *slot = Some(
+                    ((self.get_component(with[index])?) as *const Box<dyn SerializableComponent>
+                        as *mut Box<dyn SerializableComponent>)
+                        .as_mut()?,
+                )
+            }
+        }
+
+        Some(array::from_fn(|index| {
+            component_slots[index].take().unwrap()
+        }))
+    }
+}
+
+#[macro_export]
+macro_rules! query_bundle {
+    ($bundle:expr, ($($with:ty),*), ($($without:ty),*)) => {
+        ::paste::paste! {
+            $bundle.query([$(<$with>::COMPONENT_ID),*], [$(<$without>::COMPONENT_ID),*]).map(|[$([<$with:snake>]),*]| {
+                unsafe { ($(([<$with:snake>] as *const ::std::boxed::Box<dyn hydrogen_ecs::component::Component> as *const ::std::boxed::Box<$with>).as_ref().unwrap().as_ref(),)*) }
+            })
+        }
+    };
+    ($bundle:expr, $($with:ty),*) => {
+        hydrogen_ecs::component::query!($bundle, ($($with),*), ())
+    };
+}
+
+#[macro_export]
+macro_rules! query_bundle_mut {
+    ($bundle:expr, ($($with:ty),*), ($($without:ty),*)) => {
+        ::paste::paste! {
+            $bundle.query_mut([$(<$with>::COMPONENT_ID),*], [$(<$without>::COMPONENT_ID),*]).map(|[$([<$with:snake>]),*]| {
+                unsafe { ($(([<$with:snake>] as *const ::std::boxed::Box<dyn hydrogen_ecs::component::Component> as *mut ::std::boxed::Box<$with>).as_mut().unwrap().as_mut(),)*) }
+            })
+        }
+    };
+    ($bundle:expr, $($with:ty),*) => {
+        hydrogen_ecs::component::query_mut!($bundle, ($($with),*), ())
+    };
 }
