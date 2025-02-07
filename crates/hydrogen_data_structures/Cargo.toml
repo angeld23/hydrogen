@@ -1,6 +1,6 @@
 [package]
 name = "hydrogen_data_structures"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 [dependencies]
@@ -8,7 +8,7 @@ hydrogen_math = { path = "../hydrogen_math" }
 cgmath = "0.18.0"
 linear-map = "1.2.0"
 serde = "1.0.204"
-derive_more = { version = "1.0.0", features = [
+derive_more = { version = "2.0.1", features = [
     "add",
     "add_assign",
     "as_ref",

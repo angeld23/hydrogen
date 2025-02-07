@@ -1,6 +1,6 @@
 [package]
 name = "hydrogen"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2021"
 
 [workspace]
@@ -14,3 +14,4 @@ hydrogen_core = { path = "crates/hydrogen_core" }
 hydrogen_gui = { path = "crates/hydrogen_gui" }
 hydrogen_ecs = { path = "crates/hydrogen_ecs" }
 hydrogen_net = { path = "crates/hydrogen_net" }
+hydrogen_data_structures = { path = "crates/hydrogen_data_structures" }

@@ -1286,9 +1286,10 @@ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 
 [[package]]
 name = "hydrogen"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "hydrogen_core",
+ "hydrogen_data_structures",
  "hydrogen_debug",
  "hydrogen_ecs",
  "hydrogen_graphics",
@@ -1323,10 +1324,10 @@ dependencies = [
 
 [[package]]
 name = "hydrogen_data_structures"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "cgmath",
- "derive_more 1.0.0",
+ "derive_more 2.0.1",
  "hydrogen_math",
  "linear-map",
  "serde",
