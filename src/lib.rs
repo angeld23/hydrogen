@@ -1,4 +1,5 @@
 pub use hydrogen_core as core;
+pub use hydrogen_data_structures as data_structures;
 pub use hydrogen_debug as debug;
 pub use hydrogen_ecs as ecs;
 pub use hydrogen_graphics as graphics;
