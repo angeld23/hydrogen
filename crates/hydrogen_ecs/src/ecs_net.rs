@@ -10,7 +10,6 @@ use hydrogen_net::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    self as hydrogen_ecs,
     component::{Component, ComponentId, SerializableComponent},
     entity::EntityId,
     query, query_one,

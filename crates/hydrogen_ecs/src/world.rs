@@ -279,12 +279,12 @@ macro_rules! query {
     ($world:expr, ($($with:ty),*), ($($without:ty),*)) => {
         ::paste::paste! {
             $world.query([$(<$with>::COMPONENT_ID),*], [$(<$without>::COMPONENT_ID),*]).map(|(entity_id, [$([<$with:snake>]),*])| {
-                unsafe { (entity_id, ($(([<$with:snake>] as *const ::std::boxed::Box<dyn hydrogen_ecs::component::Component> as *const ::std::boxed::Box<$with>).as_ref().unwrap().as_ref(),)*)) }
+                unsafe { (entity_id, ($(([<$with:snake>] as *const ::std::boxed::Box<dyn hydrogen::ecs::component::Component> as *const ::std::boxed::Box<$with>).as_ref().unwrap().as_ref(),)*)) }
             })
         }
     };
     ($world:expr, $($with:ty),*) => {
-        hydrogen_ecs::world::query!($world, ($($with),*), ())
+        hydrogen::ecs::world::query!($world, ($($with),*), ())
     };
 }
 
@@ -293,12 +293,12 @@ macro_rules! query_mut {
     ($world:expr, ($($with:ty),*), ($($without:ty),*)) => {
         ::paste::paste! {
             $world.query_mut([$(<$with>::COMPONENT_ID),*], [$(<$without>::COMPONENT_ID),*]).map(|(entity_id, [$([<$with:snake>]),*])| {
-                unsafe { (entity_id, ($(([<$with:snake>] as *const ::std::boxed::Box<dyn hydrogen_ecs::component::Component> as *mut ::std::boxed::Box<$with>).as_mut().unwrap().as_mut(),)*)) }
+                unsafe { (entity_id, ($(([<$with:snake>] as *const ::std::boxed::Box<dyn hydrogen::ecs::component::Component> as *mut ::std::boxed::Box<$with>).as_mut().unwrap().as_mut(),)*)) }
             })
         }
     };
     ($world:expr, $($with:ty),*) => {
-        hydrogen_ecs::world::query_mut!($world, ($($with),*), ())
+        hydrogen::ecs::world::query_mut!($world, ($($with),*), ())
     };
 }
 
@@ -307,12 +307,12 @@ macro_rules! query_one {
     ($world:expr, $entity_id:expr, ($($with:ty),*), ($($without:ty),*)) => {
         ::paste::paste! {
             $world.query_one($entity_id, [$(<$with>::COMPONENT_ID),*], [$(<$without>::COMPONENT_ID),*]).map(|[$([<$with:snake>]),*]| {
-                unsafe { ($(([<$with:snake>] as *const ::std::boxed::Box<dyn hydrogen_ecs::component::Component> as *const ::std::boxed::Box<$with>).as_ref().unwrap().as_ref(),)*) }
+                unsafe { ($(([<$with:snake>] as *const ::std::boxed::Box<dyn hydrogen::ecs::component::Component> as *const ::std::boxed::Box<$with>).as_ref().unwrap().as_ref(),)*) }
             })
         }
     };
     ($world:expr, $entity_id:expr, $($with:ty),*) => {
-        hydrogen_ecs::world::query_one!($world, $entity_id, ($($with),*), ())
+        hydrogen::ecs::world::query_one!($world, $entity_id, ($($with),*), ())
     };
 }
 
@@ -321,12 +321,12 @@ macro_rules! query_one_mut {
     ($world:expr, $entity_id:expr, ($($with:ty),*), ($($without:ty),*)) => {
         ::paste::paste! {
             $world.query_one_mut($entity_id, [$(<$with>::COMPONENT_ID),*], [$(<$without>::COMPONENT_ID),*]).map(|[$([<$with:snake>]),*]| {
-                unsafe { ($(([<$with:snake>] as *const ::std::boxed::Box<dyn hydrogen_ecs::component::Component> as *mut ::std::boxed::Box<$with>).as_mut().unwrap().as_mut(),)*) }
+                unsafe { ($(([<$with:snake>] as *const ::std::boxed::Box<dyn hydrogen::ecs::component::Component> as *mut ::std::boxed::Box<$with>).as_mut().unwrap().as_mut(),)*) }
             })
         }
     };
     ($world:expr, $entity_id:expr, $($with:ty),*) => {
-        hydrogen_ecs::world::query_one_mut!($world, $entity_id, ($($with),*), ())
+        hydrogen::ecs::world::query_one_mut!($world, $entity_id, ($($with),*), ())
     };
 }
 
