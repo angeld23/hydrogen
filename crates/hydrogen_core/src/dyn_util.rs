@@ -36,3 +36,17 @@ impl PartialEq for Box<dyn DynPartialEq> {
         (**self).dyn_eq((**other).as_any())
     }
 }
+
+#[macro_export]
+macro_rules! downcast {
+    ($value:ident, $ty:ty) => {
+        $value.as_any().downcast_ref::<$ty>().unwrap()
+    };
+}
+
+#[macro_export]
+macro_rules! downcast_mut {
+    ($value:ident, $ty:ty) => {
+        $value.as_any_mut().downcast_mut::<$ty>().unwrap()
+    };
+}

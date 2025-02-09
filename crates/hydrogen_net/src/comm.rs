@@ -1,4 +1,6 @@
+use derive_more::*;
 use log::error;
+use serde::{Deserialize, Serialize};
 use std::{
     any::Any,
     collections::VecDeque,
@@ -9,8 +11,30 @@ use thiserror::Error;
 
 pub use hydrogen_net_proc_macro::NetMessage;
 
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    From,
+    Into,
+    Add,
+    AddAssign,
+    Sub,
+    SubAssign,
+)]
+pub struct NetMessageId(pub u64);
+
 #[typetag::serde(tag = "type")]
-pub trait NetMessage: Any {}
+pub trait NetMessage: Any {
+    fn net_id(&self) -> NetMessageId;
+    fn display_name(&self) -> &'static str;
+}
 
 #[derive(Debug, Error)]
 pub enum TcpCommunicatorError {
