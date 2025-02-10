@@ -45,7 +45,7 @@ pub struct Replicate {
     pub server_entity_id: ServerEntityId,
     pub owner: Option<ClientId>,
     pub replicate_to: Selection<ClientId>,
-    /// The client can never write to a [`Replicate`] component.
+    /// Note: The client can never write to a [`Replicate`] component.
     pub client_writable: Selection<ComponentId>,
     pub replicated_components: Selection<ComponentId>,
     pub auto_replicate_changes: Selection<ComponentId>,
@@ -56,6 +56,16 @@ pub enum NetEcsCommand {
     SetComponent(ServerEntityId, Box<dyn SerializableComponent>),
     DeleteComponent(ServerEntityId, ComponentId),
     DeleteEntity(ServerEntityId),
+}
+
+impl NetEcsCommand {
+    pub fn server_entity_id(&self) -> ServerEntityId {
+        match self {
+            Self::SetComponent(server_entity_id, _) => *server_entity_id,
+            Self::DeleteComponent(server_entity_id, _) => *server_entity_id,
+            Self::DeleteEntity(server_entity_id) => *server_entity_id,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]

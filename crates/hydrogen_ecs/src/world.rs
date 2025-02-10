@@ -2,6 +2,7 @@ use hydrogen_core::dyn_util::AsAny;
 
 use crate::{
     component::{Component, ComponentId, ComponentSet, SerializableComponent},
+    ecs_net::{NetEcsCommand, ServerEntityId},
     entity::EntityId,
 };
 use std::{array, collections::BTreeMap};
@@ -9,6 +10,7 @@ use std::{array, collections::BTreeMap};
 #[derive(Debug, Default)]
 pub struct World {
     components: BTreeMap<ComponentId, ComponentSet>,
+    server_entity_id_map: BTreeMap<ServerEntityId, EntityId>,
     next_entity_id: u32,
 }
 
@@ -20,6 +22,32 @@ impl World {
     pub fn new_entity_id(&mut self) -> EntityId {
         self.next_entity_id += 1;
         (self.next_entity_id - 1).into()
+    }
+
+    pub fn entity_id_from_server(&mut self, server_entity_id: ServerEntityId) -> EntityId {
+        if let Some(&entity_id) = self.server_entity_id_map.get(&server_entity_id) {
+            entity_id
+        } else {
+            let entity_id = self.new_entity_id();
+            self.server_entity_id_map
+                .insert(server_entity_id, entity_id);
+            entity_id
+        }
+    }
+
+    pub fn execute_net_command(&mut self, command: NetEcsCommand) {
+        let entity_id = self.entity_id_from_server(command.server_entity_id());
+        match command {
+            NetEcsCommand::SetComponent(_, component) => {
+                self.set_component_boxed(entity_id, component);
+            }
+            NetEcsCommand::DeleteComponent(_, component_id) => {
+                self.delete_component(entity_id, component_id);
+            }
+            NetEcsCommand::DeleteEntity(_) => {
+                self.delete_entity(entity_id);
+            }
+        }
     }
 
     pub fn get_component(
@@ -105,6 +133,18 @@ impl World {
     }
 
     pub fn set_component<T: Component>(&mut self, entity_id: EntityId, component: T) -> Option<T> {
+        if let Some(old_component) = self.set_component_boxed(entity_id, Box::new(component)) {
+            return Some(*Box::<(dyn std::any::Any + 'static)>::downcast::<T>(old_component).ok()?);
+        }
+
+        None
+    }
+
+    pub fn set_component_boxed(
+        &mut self,
+        entity_id: EntityId,
+        component: Box<dyn Component>,
+    ) -> Option<Box<dyn Component>> {
         let component_set = if let Some(set) = self.components.get_mut(&component.component_id()) {
             set
         } else {
@@ -115,11 +155,7 @@ impl World {
             self.components.get_mut(&component.component_id())?
         };
 
-        if let Some(old_component) = component_set.set(entity_id, Box::new(component)) {
-            return Some(*Box::<(dyn std::any::Any + 'static)>::downcast::<T>(old_component).ok()?);
-        }
-
-        None
+        component_set.set(entity_id, component)
     }
 
     pub fn delete_component(
