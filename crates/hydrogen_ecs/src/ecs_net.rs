@@ -70,12 +70,19 @@ impl NetEcsCommand {
 
 #[derive(Debug, PartialEq)]
 pub struct EcsServerReplicator {
-    client_id: ClientId,
-    current_entities:
+    pub client_id: ClientId,
+    pub current_entities:
         BTreeMap<ServerEntityId, BTreeMap<ComponentId, Box<dyn SerializableComponent>>>,
 }
 
 impl EcsServerReplicator {
+    pub fn new(client_id: ClientId) -> Self {
+        Self {
+            client_id,
+            current_entities: Default::default(),
+        }
+    }
+
     pub fn update(&mut self, world: &mut World, comm: &mut TcpCommunicator) {
         // make sure all relevant entities are present in current_entities
         for (entity_id, (replicate,)) in query!(world, Replicate) {
