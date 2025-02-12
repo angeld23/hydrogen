@@ -1,5 +1,5 @@
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput};
+use syn::{parse_macro_input, DeriveInput, Type};
 
 fn has_empty_attribute(field: &syn::Field, expected_ident: &str) -> bool {
     field.attrs.iter().any(|attr| {
@@ -33,21 +33,39 @@ pub fn dependency(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         let name = &field.ident;
         let ty = &field.ty;
 
+        let (is_reference, inner_ty) = if let Type::Reference(ty_ref) = ty {
+            let inner_ty = ty_ref.elem.as_ref();
+            (true, quote! { #inner_ty })
+        } else {
+            (false, quote! { #ty })
+        };
+
         let has_dep = has_empty_attribute(field, "dep");
         let has_dep_mut = has_empty_attribute(field, "dep_mut");
 
+        let dep_fn_body = if is_reference {
+            quote! { self.#name }
+        } else {
+            quote! { &self.#name }
+        };
+        let dep_mut_fn_body = if is_reference {
+            quote! { self.#name }
+        } else {
+            quote! { &mut self.#name }
+        };
+
         let dep_impl = quote! {
-            impl #impl_generics hydrogen::core::dependency::Dependency<#ty> for #ident #ty_generics #where_clause {
-                fn dep(&self) -> &#ty {
-                    &self.#name
+            impl #impl_generics hydrogen::core::dependency::Dependency<#inner_ty> for #ident #ty_generics #where_clause {
+                fn dep(&self) -> &#inner_ty {
+                    #dep_fn_body
                 }
             }
         };
 
         let dep_mut_impl = quote! {
-            impl #impl_generics hydrogen::core::dependency::DependencyMut<#ty> for #ident #ty_generics #where_clause {
-                fn dep_mut(&mut self) -> &mut #ty {
-                    &mut self.#name
+            impl #impl_generics hydrogen::core::dependency::DependencyMut<#inner_ty> for #ident #ty_generics #where_clause {
+                fn dep_mut(&mut self) -> &mut #inner_ty {
+                    #dep_mut_fn_body
                 }
             }
         };
