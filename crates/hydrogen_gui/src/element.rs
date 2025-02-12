@@ -1,9 +1,10 @@
-use crate::{builder::GuiBuilder, text::TextLabel, transform::GuiTransform};
 use cgmath::{vec2, ElementWise, Vector2};
 use hydrogen_core::dependency::{Dependency, DependencyMut};
 use hydrogen_data_structures::indexed_container::IndexedContainer;
 use hydrogen_graphics::{color::RGBA, texture_provider::TextureProvider, vertex::Vertex2D};
 use hydrogen_math::{bbox, rect::OrientedSection};
+
+use crate::{builder::GuiBuilder, text::TextLabel, transform::GuiTransform};
 
 #[derive(Debug)]
 pub struct GuiContext<D> {

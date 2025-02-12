@@ -33,16 +33,17 @@ impl Default for TextButton {
 }
 
 impl TextButton {
-    pub fn render<D>(&mut self, builder: &mut GuiBuilder<D>, text_label: TextLabel)
+    pub fn render<D>(&mut self, builder: &GuiBuilder<D>, text_label: TextLabel)
     where
         D: Dependency<TextureProvider> + DependencyMut<InputController>,
     {
-        self.button
-            .update(&mut builder.context, text_label.transform);
+        let context = &mut builder.context();
 
-        let outline_thickness = get_outline_thickness(builder.context.global_frame.y);
+        self.button.update(context, text_label.transform);
 
-        let (absolute_position, absolute_size) = builder.context.absolute(text_label.transform);
+        let outline_thickness = get_outline_thickness(context.global_frame.y);
+
+        let (absolute_position, absolute_size) = context.absolute(text_label.transform);
 
         builder.element(TextureFrame {
             transform: text_label.transform,
@@ -51,7 +52,7 @@ impl TextButton {
             } else {
                 RGBA::BLACK
             },
-            section: builder.context.white(),
+            section: context.white(),
         });
 
         builder.element(TextLabel {
@@ -68,7 +69,7 @@ impl TextButton {
 }
 
 pub fn button_list<D>(
-    builder: &mut GuiBuilder<D>,
+    builder: &GuiBuilder<D>,
     container: GuiTransform,
     button_rows: &mut [&mut [&mut TextButton]],
     render_buttons: bool,
@@ -79,10 +80,12 @@ pub fn button_list<D>(
         return;
     }
 
-    let row_count = button_rows.len();
-    let pixel_margin = get_list_margin(builder.context.global_frame.y);
+    let context = &mut builder.context();
 
-    let (absolute_position, absolute_size) = builder.context.absolute(container);
+    let row_count = button_rows.len();
+    let pixel_margin = get_list_margin(context.global_frame.y);
+
+    let (absolute_position, absolute_size) = context.absolute(container);
     // the whole frame *minus* the total margin, divided by the amount of rows
     let button_pixel_height =
         (absolute_size.y - (row_count - 1) as f32 * pixel_margin) / row_count as f32;
