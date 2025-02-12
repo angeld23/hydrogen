@@ -1422,7 +1422,7 @@ dependencies = [
 
 [[package]]
 name = "hydrogen_net"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "derive_more 1.0.0",

@@ -6,6 +6,8 @@ use std::{
     collections::BTreeMap,
     io,
     net::{SocketAddr, TcpListener},
+    rc::Rc,
+    sync::{Mutex, MutexGuard},
 };
 
 use crate::comm::{TcpCommunicator, TcpCommunicatorError};
@@ -31,7 +33,7 @@ impl ClientId {
 pub struct ConnectedClient {
     client_id: ClientId,
     socket_address: SocketAddr,
-    pub comm: TcpCommunicator,
+    pub comm: Rc<Mutex<TcpCommunicator>>,
 }
 
 impl ConnectedClient {
@@ -41,6 +43,10 @@ impl ConnectedClient {
 
     pub fn socket_address(&self) -> SocketAddr {
         self.socket_address
+    }
+
+    pub fn comm(&self) -> MutexGuard<'_, TcpCommunicator> {
+        self.comm.lock().unwrap()
     }
 }
 
@@ -85,7 +91,7 @@ impl Server {
                         ConnectedClient {
                             client_id,
                             socket_address: address,
-                            comm,
+                            comm: Rc::new(Mutex::new(comm)),
                         },
                     );
 
@@ -104,8 +110,8 @@ impl Server {
     }
 
     pub fn remove_client(&mut self, client_id: ClientId) -> bool {
-        if let Some(mut client) = self.connected_clients.remove(&client_id) {
-            client.comm.close();
+        if let Some(client) = self.connected_clients.remove(&client_id) {
+            client.comm().close();
             self.events.send(ServerEvent::ClientRemoved(client));
 
             return true;
@@ -119,9 +125,9 @@ impl Server {
 
         let mut clients_to_remove = Vec::<ClientId>::new();
         for client in self.connected_clients.values_mut() {
-            if client.comm.is_closed() {
+            if client.comm().is_closed() {
                 clients_to_remove.push(client.client_id);
-            } else if let Err(e) = client.comm.update() {
+            } else if let Err(e) = client.comm().update() {
                 self.events
                     .send(ServerEvent::ClientCommUpdateError(client.client_id, e));
             }
