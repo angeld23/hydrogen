@@ -1,11 +1,16 @@
 use hydrogen_core::dyn_util::AsAny;
+use hydrogen_net::server_client::ClientId;
 
 use crate::{
     component::{Component, ComponentId, ComponentSet, SerializableComponent},
-    ecs_net::{NetEcsCommand, ServerEntityId},
+    ecs_net::{NetEcsCommand, Replicate, ServerEntityId},
     entity::EntityId,
 };
 use std::{array, collections::BTreeMap};
+
+mod hydrogen {
+    pub use crate as ecs;
+}
 
 #[derive(Debug, Default)]
 pub struct World {
@@ -46,6 +51,34 @@ impl World {
             }
             NetEcsCommand::DeleteEntity(_) => {
                 self.delete_entity(entity_id);
+            }
+        }
+    }
+
+    pub fn execute_client_net_command(&mut self, client_id: ClientId, command: NetEcsCommand) {
+        // clients cannot remove components or entities
+        if let NetEcsCommand::SetComponent(server_entity_id, component) = command {
+            let entity_id = server_entity_id.0;
+
+            // Replicate components are protected
+            if component.component_id() == Replicate::COMPONENT_ID {
+                return;
+            }
+
+            if let Some((replicate,)) = query_one!(self, entity_id, Replicate) {
+                // they need to own the entity and the component needs to be in the list of writable components
+
+                if replicate.owner != Some(client_id) {
+                    return;
+                }
+                if !replicate
+                    .client_writable
+                    .contains(&component.component_id())
+                {
+                    return;
+                }
+
+                self.set_component_boxed(entity_id, component);
             }
         }
     }
