@@ -12,10 +12,10 @@ use hydrogen_math::{
 
 #[derive(Debug)]
 pub struct TextureProvider {
-    main_texture: BindedTexture,
-    texture_sections: BTreeMap<String, PackedSection>,
-    reserved_textures: BTreeMap<String, wgpu::Texture>,
-    packer: RectPacker,
+    pub main_texture: BindedTexture,
+    pub texture_sections: BTreeMap<String, PackedSection>,
+    pub reserved_textures: BTreeMap<String, wgpu::Texture>,
+    pub packer: RectPacker,
     handle: GpuHandle,
 }
 
