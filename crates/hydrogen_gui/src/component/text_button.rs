@@ -1,19 +1,21 @@
-use super::{
-    button::Button,
-    menu::{get_list_margin, get_outline_thickness, COLOR_BUTTON_DEFAULT},
-};
-use crate::{
-    builder::GuiBuilder,
-    text::{StyledText, TextBackgroundType, TextLabel},
-    texture_frame::TextureFrame,
-    transform::GuiTransform,
-};
 use cgmath::vec2;
 use hydrogen_core::{
     dependency::{Dependency, DependencyMut},
     input::InputController,
 };
 use hydrogen_graphics::{color::RGBA, texture_provider::TextureProvider};
+
+use crate::{
+    builder::GuiBuilder,
+    text::{StyledText, TextBackgroundType, TextLabel},
+    texture_frame::TextureFrame,
+    transform::GuiTransform,
+};
+
+use super::{
+    button::Button,
+    menu::{get_list_margin, get_outline_thickness, COLOR_BUTTON_DEFAULT},
+};
 
 #[derive(Debug)]
 pub struct TextButton {
@@ -129,12 +131,12 @@ pub fn button_list<D>(
 #[macro_export]
 macro_rules! tb {
     ($text:expr) => {
-        TextButton {
-            text: StyledText::single_section(
+        hydrogen::gui::component::text_button::TextButton {
+            text: hydrogen::gui::text::StyledText::single_section(
                 $text,
-                TextStyling {
-                    text_color: GuiColor::WHITE,
-                    drop_shadow_color: GuiColor::INVISIBLE,
+                hydrogen::gui::text::TextStyling {
+                    text_color: hydrogen::graphics::color::RGBA::WHITE,
+                    drop_shadow_color: hydrogen::graphics::color::RGBA::INVISIBLE,
                     bold: false,
                 },
             ),
