@@ -1,12 +1,12 @@
 [package]
 name = "hydrogen_net"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 
 [dependencies]
 anyhow = "1.0.91"
 env_logger = "0.11.5"
-derive_more = { version = "1.0.0", features = [
+derive_more = { version = "2.0.1", features = [
     "add",
     "add_assign",
     "as_ref",

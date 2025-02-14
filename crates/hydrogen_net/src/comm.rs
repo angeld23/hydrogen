@@ -31,7 +31,7 @@ pub use hydrogen_net_proc_macro::NetMessage;
 pub struct NetMessageId(pub u64);
 
 #[typetag::serde(tag = "type")]
-pub trait NetMessage: Any {
+pub trait NetMessage: Any + Send + Sync {
     fn net_id(&self) -> NetMessageId;
     fn display_name(&self) -> &'static str;
 }
