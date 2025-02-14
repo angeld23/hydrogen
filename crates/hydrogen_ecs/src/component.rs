@@ -31,7 +31,7 @@ pub use hydrogen_ecs_proc_macro::{Component, SerializableComponent};
 )]
 pub struct ComponentId(pub u64);
 
-pub trait Component: fmt::Debug + Any + 'static {
+pub trait Component: fmt::Debug + Any + 'static + Send + Sync {
     fn component_id(&self) -> ComponentId;
     fn display_name(&self) -> &'static str;
 }
