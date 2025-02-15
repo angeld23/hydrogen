@@ -21,6 +21,7 @@ impl<D> GuiBuilder<D> {
 
     #[allow(clippy::mut_from_ref)]
     pub fn context(&self) -> &mut GuiContext<D> {
+        // this is awful. don't do things like this
         unsafe { self.context.as_mut_unchecked() }
     }
 
