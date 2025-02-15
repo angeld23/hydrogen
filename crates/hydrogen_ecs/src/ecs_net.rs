@@ -51,7 +51,7 @@ pub struct Replicate {
     pub auto_replicate_changes: Selection<ComponentId>,
 }
 
-#[derive(Debug, Serialize, Deserialize, NetMessage, IsVariant, Unwrap, TryUnwrap)]
+#[derive(Debug, Clone, Serialize, Deserialize, NetMessage, IsVariant, Unwrap, TryUnwrap)]
 pub enum NetEcsCommand {
     SetComponent(ServerEntityId, Box<dyn SerializableComponent>),
     DeleteComponent(ServerEntityId, ComponentId),
