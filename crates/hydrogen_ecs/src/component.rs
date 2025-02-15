@@ -34,6 +34,13 @@ pub struct ComponentId(pub u64);
 pub trait Component: fmt::Debug + Any + 'static + Send + Sync {
     fn component_id(&self) -> ComponentId;
     fn display_name(&self) -> &'static str;
+    fn any_ref(&self) -> &dyn Any;
+}
+
+impl dyn Component {
+    pub fn downcast_ref<T: Any>(&self) -> Option<&T> {
+        self.any_ref().downcast_ref()
+    }
 }
 
 #[typetag::serde(tag = "type")]

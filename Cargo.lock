@@ -1269,7 +1269,7 @@ dependencies = [
 
 [[package]]
 name = "hydrogen_core"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "cgmath",
  "derive_more",
@@ -1309,7 +1309,7 @@ version = "0.1.0"
 
 [[package]]
 name = "hydrogen_ecs"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "aligned-vec 0.6.1",
  "anyhow",
@@ -1328,7 +1328,7 @@ dependencies = [
 
 [[package]]
 name = "hydrogen_ecs_proc_macro"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "const-fnv1a-hash",
  "proc-macro2",
@@ -1391,7 +1391,7 @@ dependencies = [
 
 [[package]]
 name = "hydrogen_net"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "anyhow",
  "derive_more",
@@ -1410,7 +1410,7 @@ dependencies = [
 
 [[package]]
 name = "hydrogen_net_proc_macro"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "const-fnv1a-hash",
  "proc-macro2",

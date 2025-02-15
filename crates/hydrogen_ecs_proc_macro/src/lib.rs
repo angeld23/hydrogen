@@ -29,6 +29,9 @@ pub fn component(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
             fn display_name(&self) -> &'static str {
                 #display_name
             }
+            fn any_ref(&self) -> &dyn std::any::Any {
+                self
+            }
         }
     }.into()
 }

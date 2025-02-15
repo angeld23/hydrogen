@@ -34,6 +34,13 @@ pub struct NetMessageId(pub u64);
 pub trait NetMessage: Any + Send + Sync {
     fn net_id(&self) -> NetMessageId;
     fn display_name(&self) -> &'static str;
+    fn any_ref(&self) -> &dyn Any;
+}
+
+impl dyn NetMessage {
+    pub fn downcast_ref<T: Any>(&self) -> Option<&T> {
+        self.any_ref().downcast_ref()
+    }
 }
 
 #[derive(Debug, Error)]
