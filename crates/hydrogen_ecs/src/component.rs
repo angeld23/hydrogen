@@ -125,8 +125,10 @@ impl ComponentSet {
 
         if let Some(component_index) = self.deleted_component_indices.pop_front() {
             self.components[component_index] = Some(entry);
+            self.entity_component_indices[index] = Some(component_index);
         } else {
             self.components.push(Some(entry));
+            self.entity_component_indices[index] = Some(self.components.len() - 1);
         };
 
         None

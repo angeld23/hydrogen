@@ -1,6 +1,7 @@
+use wgpu::util::DeviceExt;
+
 use crate::gpu_handle::GpuHandle;
 use std::{mem, ops::Range};
-use wgpu::util::DeviceExt;
 
 #[derive(Debug)]
 pub struct GpuVec<T>
@@ -22,20 +23,16 @@ where
         usage: wgpu::BufferUsages,
         inner_vec: &Vec<T>,
     ) -> wgpu::Buffer {
+        let mut buffer_data = vec![0u8; inner_vec.capacity() * mem::size_of::<T>()];
+
+        let initialized_bytes = bytemuck::cast_slice(inner_vec.as_slice());
+        buffer_data[..initialized_bytes.len()].copy_from_slice(initialized_bytes);
+
         handle
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: None,
-                contents: unsafe {
-                    // SAFETY:
-                    // - contents of the buffer beyond the range of inner_vec are allowed to be undefined,
-                    // as long as there is no public way to retrieve a slice of a GpuVec's inner_buffer that goes
-                    // beyond the range of inner_vec
-                    // - we're still only getting a slice up to inner_vec's capacity, which means it's allocated
-                    // (and that's good i think)
-
-                    bytemuck::cast_slice(inner_vec.get_unchecked(..inner_vec.capacity()))
-                },
+                contents: &buffer_data,
                 usage: usage | wgpu::BufferUsages::COPY_DST,
             })
     }
