@@ -1255,7 +1255,7 @@ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 
 [[package]]
 name = "hydrogen"
-version = "0.1.7"
+version = "0.2.0"
 dependencies = [
  "hydrogen_core",
  "hydrogen_data_structures",
@@ -1309,7 +1309,7 @@ version = "0.1.0"
 
 [[package]]
 name = "hydrogen_ecs"
-version = "0.1.7"
+version = "0.2.0"
 dependencies = [
  "aligned-vec 0.6.1",
  "anyhow",

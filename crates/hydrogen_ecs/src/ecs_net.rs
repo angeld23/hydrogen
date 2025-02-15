@@ -69,13 +69,13 @@ impl NetEcsCommand {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct EcsServerReplicator {
+pub struct EcsReplicator {
     pub client_id: ClientId,
     pub current_entities:
         BTreeMap<ServerEntityId, BTreeMap<ComponentId, Box<dyn SerializableComponent>>>,
 }
 
-impl EcsServerReplicator {
+impl EcsReplicator {
     pub fn new(client_id: ClientId) -> Self {
         Self {
             client_id,
@@ -83,7 +83,7 @@ impl EcsServerReplicator {
         }
     }
 
-    pub fn update(&mut self, world: &mut World, comm: &mut TcpCommunicator) {
+    pub fn server_update(&mut self, world: &mut World, comm: &mut TcpCommunicator) {
         // make sure all relevant entities are present in current_entities
         for (entity_id, (replicate,)) in query!(world, Replicate) {
             let entity_should_exist_on_client = replicate.owner == Some(self.client_id)
@@ -169,6 +169,74 @@ impl EcsServerReplicator {
                         component_id,
                     ));
                 }
+            }
+        }
+    }
+
+    pub fn client_update(&mut self, world: &mut World, comm: &mut TcpCommunicator) {
+        // make sure all relevant entities are present in current_entities
+        for (_, (replicate,)) in query!(world, Replicate) {
+            if replicate.owner != Some(self.client_id) {
+                self.current_entities.remove(&replicate.server_entity_id);
+                continue;
+            }
+            self.current_entities
+                .entry(replicate.server_entity_id)
+                .or_default();
+        }
+
+        let mut entities_to_delete = Vec::<ServerEntityId>::new();
+        let mut components_to_delete = Vec::<(ServerEntityId, ComponentId)>::new();
+
+        // replicate changes
+        for (&server_entity_id, previous_components) in self.current_entities.iter_mut() {
+            let entity_id = world.entity_id_from_server(server_entity_id);
+
+            if let Some((replicate,)) = query_one!(world, entity_id, Replicate) {
+                for (component_id, component) in world.get_all_serializable_components(entity_id) {
+                    // no changing the Replicate component!!
+                    if component_id == Replicate::COMPONENT_ID {
+                        continue;
+                    }
+
+                    if replicate.client_writable.contains(&component_id) {
+                        if let Some(prev_component) = previous_components.get_mut(&component_id) {
+                            // tell the server if there's a change
+                            if prev_component != component {
+                                comm.send(NetEcsCommand::SetComponent(
+                                    server_entity_id,
+                                    component.clone(),
+                                ));
+                                *prev_component = component.clone();
+                            }
+                        } else {
+                            // if we just now started tracking the component, replicate it to the server
+                            comm.send(NetEcsCommand::SetComponent(
+                                server_entity_id,
+                                component.clone(),
+                            ));
+                            previous_components.insert(component_id, component.clone());
+                        }
+                    } else if previous_components.contains_key(&component_id) {
+                        // stop tracking the component if we've lost write permissions
+                        components_to_delete.push((server_entity_id, component_id));
+                    }
+                }
+            } else {
+                // if the whole replicated component is gone, stop tracking the entity
+                entities_to_delete.push(server_entity_id);
+            }
+        }
+
+        // process any requested deletions of entities and components
+
+        for server_entity_id in entities_to_delete {
+            self.current_entities.remove(&server_entity_id);
+        }
+
+        for (server_entity_id, component_id) in components_to_delete {
+            if let Some(current_components) = self.current_entities.get_mut(&server_entity_id) {
+                current_components.remove(&component_id);
             }
         }
     }
