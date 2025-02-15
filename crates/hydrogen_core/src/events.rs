@@ -44,7 +44,7 @@ impl<T> EventSender<T> {
     }
 
     pub fn clean(&self) {
-        let mut events = self.events.lock().unwrap();
+        let mut events = self.events.try_lock().unwrap();
 
         loop {
             if let Some(front) = events.front() {
@@ -59,14 +59,16 @@ impl<T> EventSender<T> {
     }
 
     pub fn send(&self, event: impl Into<Arc<T>>) {
-        let mut next_index = self.next_index.lock().unwrap();
-        let mut events = self.events.lock().unwrap();
-        events.push_back(Event {
-            inner: event.into(),
-            sent_at: Instant::now(),
-            index: *next_index,
-        });
-        *next_index += 1;
+        {
+            let mut next_index = self.next_index.try_lock().unwrap();
+            let mut events = self.events.try_lock().unwrap();
+            events.push_back(Event {
+                inner: event.into(),
+                sent_at: Instant::now(),
+                index: *next_index,
+            });
+            *next_index += 1;
+        }
 
         self.clean();
     }
@@ -74,15 +76,15 @@ impl<T> EventSender<T> {
     pub fn subscribe(&self) -> EventReceiver<T> {
         EventReceiver {
             events: Arc::clone(&self.events),
-            next_index: Mutex::new(*self.next_index.lock().unwrap()),
+            next_index: Mutex::new(*self.next_index.try_lock().unwrap()),
         }
     }
 }
 
 impl<T> EventReceiver<T> {
     pub fn recv(&self) -> Option<Arc<T>> {
-        let mut next_index = self.next_index.lock().unwrap();
-        let events = self.events.lock().unwrap();
+        let mut next_index = self.next_index.try_lock().unwrap();
+        let events = self.events.try_lock().unwrap();
         let inner = Arc::clone(
             &events
                 .iter()

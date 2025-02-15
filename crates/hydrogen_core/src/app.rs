@@ -123,6 +123,11 @@ where
             return;
         }
 
+        self.controllers
+            .as_mut()
+            .unwrap()
+            .input_controller
+            .winit_event(WinitEvent::Window(&event));
         app_state.winit_event(
             WinitEvent::Window(&event),
             self.controllers.as_mut().unwrap(),
@@ -195,9 +200,14 @@ where
             _ => return,
         };
 
+        self.controllers
+            .as_mut()
+            .unwrap()
+            .input_controller
+            .winit_event(WinitEvent::Device(&event));
         app_state.winit_event(
             WinitEvent::Device(&event),
             self.controllers.as_mut().unwrap(),
-        )
+        );
     }
 }
