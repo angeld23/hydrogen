@@ -1,3 +1,5 @@
+#![feature(unsafe_cell_access)]
+
 pub mod builder;
 pub mod component;
 pub mod element;

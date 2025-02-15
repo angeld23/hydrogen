@@ -39,7 +39,7 @@ impl TextButton {
     where
         D: Dependency<TextureProvider> + DependencyMut<InputController>,
     {
-        let context = &mut builder.context();
+        let context = builder.context();
 
         self.button.update(context, text_label.transform);
 
@@ -82,7 +82,7 @@ pub fn button_list<D>(
         return;
     }
 
-    let context = &mut builder.context();
+    let context = builder.context();
 
     let row_count = button_rows.len();
     let pixel_margin = get_list_margin(context.global_frame.y);

@@ -1,4 +1,4 @@
-use std::sync::{Mutex, MutexGuard};
+use std::{cell::UnsafeCell, sync::Mutex};
 
 use hydrogen_data_structures::indexed_container::IndexedContainer;
 use hydrogen_graphics::vertex::Vertex2D;
@@ -8,23 +8,24 @@ use crate::element::{GuiContext, GuiElement};
 #[derive(Debug)]
 pub struct GuiBuilder<D> {
     vertices: Mutex<IndexedContainer<Vertex2D>>,
-    context: Mutex<GuiContext<D>>,
+    context: UnsafeCell<GuiContext<D>>,
 }
 
 impl<D> GuiBuilder<D> {
     pub fn new(context: GuiContext<D>) -> Self {
         Self {
             vertices: Mutex::new(Default::default()),
-            context: Mutex::new(context),
+            context: UnsafeCell::new(context),
         }
     }
 
-    pub fn context(&self) -> MutexGuard<'_, GuiContext<D>> {
-        self.context.lock().unwrap()
+    #[allow(clippy::mut_from_ref)]
+    pub fn context(&self) -> &mut GuiContext<D> {
+        unsafe { self.context.as_mut_unchecked() }
     }
 
     pub fn element(&self, element: impl GuiElement<D>) -> &Self {
-        let primitives = element.render(&mut self.context());
+        let primitives = element.render(self.context());
         let context = self.context();
         let mut vertices = self.vertices.lock().unwrap();
 
@@ -42,7 +43,7 @@ impl<D> GuiBuilder<D> {
         element: impl GuiElement<D>,
         children: impl FnOnce(&Self),
     ) -> &Self {
-        let mut context = self.context();
+        let context = self.context();
 
         let old_frame = context.frame;
         let old_offset = context.offset;
