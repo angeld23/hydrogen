@@ -30,7 +30,7 @@ pub use hydrogen_net_proc_macro::NetMessage;
 )]
 pub struct NetMessageId(pub u64);
 
-#[typetag::serde(tag = "type")]
+#[typetag::serde]
 pub trait NetMessage: Any + Send + Sync {
     fn net_id(&self) -> NetMessageId;
     fn display_name(&self) -> &'static str;
@@ -165,8 +165,9 @@ impl TcpCommunicator {
             for index in old_read_position..self.read_position {
                 let byte = self.read_buffer[index];
                 if byte == 0 {
-                    match postcard::from_bytes_cobs(&mut self.read_buffer[message_start..index + 1])
-                    {
+                    match postcard::from_bytes_cobs::<Box<dyn NetMessage>>(
+                        &mut self.read_buffer[message_start..index + 1],
+                    ) {
                         Ok(message) => {
                             self.read_queue.push_back(message);
                         }

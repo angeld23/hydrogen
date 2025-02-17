@@ -47,7 +47,7 @@ impl dyn Component {
     }
 }
 
-#[typetag::serde(tag = "type")]
+#[typetag::serde]
 pub trait SerializableComponent: Component + DynClone + DynPartialEq + Send + Sync {
     fn clone_box(&self) -> Box<dyn SerializableComponent>;
 }
