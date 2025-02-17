@@ -35,10 +35,10 @@ pub fn component(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
             fn is_serializable(&self) -> bool {
                 false
             }
-            fn as_serializable(&self) -> Option<&dyn SerializableComponent> {
+            fn as_serializable(&self) -> Option<&dyn hydrogen::ecs::component::SerializableComponent> {
                 None
             }
-            fn as_serializable_mut(&mut self) -> Option<&mut dyn SerializableComponent> {
+            fn as_serializable_mut(&mut self) -> Option<&mut dyn hydrogen::ecs::component::SerializableComponent> {
                 None
             }
         }
