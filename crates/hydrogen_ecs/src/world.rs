@@ -1,4 +1,5 @@
-use hydrogen_core::dyn_util::AsAny;
+use std::{any::Any, array, collections::BTreeMap};
+
 use hydrogen_net::server_client::ClientId;
 
 use crate::{
@@ -6,7 +7,6 @@ use crate::{
     ecs_net::{NetEcsCommand, Replicate, ServerEntityId},
     entity::EntityId,
 };
-use std::{array, collections::BTreeMap};
 
 mod hydrogen {
     pub use crate as ecs;
@@ -138,36 +138,26 @@ impl World {
     pub fn get_all_serializable_components(
         &self,
         entity_id: EntityId,
-    ) -> impl Iterator<Item = (ComponentId, &Box<dyn SerializableComponent>)> {
+    ) -> impl Iterator<Item = (ComponentId, &dyn SerializableComponent)> {
         self.get_all_components(entity_id)
             .filter_map(|(component_id, component)| {
-                Some((
-                    component_id,
-                    component
-                        .as_any()
-                        .downcast_ref::<Box<dyn SerializableComponent>>()?,
-                ))
+                Some((component_id, component.as_serializable()?))
             })
     }
 
     pub fn get_all_serializable_components_mut(
         &mut self,
         entity_id: EntityId,
-    ) -> impl Iterator<Item = (ComponentId, &mut Box<dyn SerializableComponent>)> {
+    ) -> impl Iterator<Item = (ComponentId, &mut dyn SerializableComponent)> {
         self.get_all_components_mut(entity_id)
             .filter_map(|(component_id, component)| {
-                Some((
-                    component_id,
-                    component
-                        .as_any_mut()
-                        .downcast_mut::<Box<dyn SerializableComponent>>()?,
-                ))
+                Some((component_id, component.as_serializable_mut()?))
             })
     }
 
     pub fn set_component<T: Component>(&mut self, entity_id: EntityId, component: T) -> Option<T> {
         if let Some(old_component) = self.set_component_boxed(entity_id, Box::new(component)) {
-            return Some(*Box::<(dyn std::any::Any + 'static)>::downcast::<T>(old_component).ok()?);
+            return Some(*Box::<(dyn Any + 'static)>::downcast::<T>(old_component).ok()?);
         }
 
         None

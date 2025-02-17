@@ -40,7 +40,7 @@ mod hydrogen {
 )]
 pub struct ServerEntityId(pub EntityId);
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Component, SerializableComponent)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, SerializableComponent)]
 pub struct Replicate {
     pub server_entity_id: ServerEntityId,
     pub owner: Option<ClientId>,
@@ -130,21 +130,21 @@ impl EcsReplicator {
                                     && replicate.auto_replicate_changes.contains(&component_id));
 
                             if should_auto_replicate_changes
-                                && current_component != serializable_component
+                                && current_component.as_ref() != serializable_component
                             {
                                 current_components
-                                    .insert(component_id, serializable_component.clone());
+                                    .insert(component_id, serializable_component.clone_box());
                                 comm.send(NetEcsCommand::SetComponent(
                                     server_entity_id,
-                                    serializable_component.clone(),
+                                    serializable_component.clone_box(),
                                 ));
                             }
                         }
                     } else if should_exist {
-                        current_components.insert(component_id, serializable_component.clone());
+                        current_components.insert(component_id, serializable_component.clone_box());
                         comm.send(NetEcsCommand::SetComponent(
                             server_entity_id,
-                            serializable_component.clone(),
+                            serializable_component.clone_box(),
                         ));
                     }
                 }
@@ -202,20 +202,20 @@ impl EcsReplicator {
                     if replicate.client_writable.contains(&component_id) {
                         if let Some(prev_component) = previous_components.get_mut(&component_id) {
                             // tell the server if there's a change
-                            if prev_component != component {
+                            if prev_component.as_ref() != component {
                                 comm.send(NetEcsCommand::SetComponent(
                                     server_entity_id,
-                                    component.clone(),
+                                    component.clone_box(),
                                 ));
-                                *prev_component = component.clone();
+                                *prev_component = component.clone_box();
                             }
                         } else {
                             // if we just now started tracking the component, replicate it to the server
                             comm.send(NetEcsCommand::SetComponent(
                                 server_entity_id,
-                                component.clone(),
+                                component.clone_box(),
                             ));
-                            previous_components.insert(component_id, component.clone());
+                            previous_components.insert(component_id, component.clone_box());
                         }
                     } else if previous_components.contains_key(&component_id) {
                         // stop tracking the component if we've lost write permissions

@@ -1,7 +1,7 @@
 use crate::entity::EntityId;
 use derive_more::*;
 use dyn_clone::DynClone;
-use hydrogen_core::dyn_util::{AsAny, DynPartialEq};
+use hydrogen_core::dyn_util::DynPartialEq;
 use serde::{Deserialize, Serialize};
 use std::{
     any::Any,
@@ -35,6 +35,10 @@ pub trait Component: fmt::Debug + Any + 'static + Send + Sync {
     fn component_id(&self) -> ComponentId;
     fn display_name(&self) -> &'static str;
     fn any_ref(&self) -> &dyn Any;
+
+    fn is_serializable(&self) -> bool;
+    fn as_serializable(&self) -> Option<&dyn SerializableComponent>;
+    fn as_serializable_mut(&mut self) -> Option<&mut dyn SerializableComponent>;
 }
 
 impl dyn Component {
@@ -44,12 +48,14 @@ impl dyn Component {
 }
 
 #[typetag::serde(tag = "type")]
-pub trait SerializableComponent: Component + DynClone + DynPartialEq + Send + Sync {}
+pub trait SerializableComponent: Component + DynClone + DynPartialEq + Send + Sync {
+    fn clone_box(&self) -> Box<dyn SerializableComponent>;
+}
 dyn_clone::clone_trait_object!(SerializableComponent);
 
-impl PartialEq for Box<dyn SerializableComponent> {
+impl PartialEq for dyn SerializableComponent {
     fn eq(&self, other: &Self) -> bool {
-        (**self).dyn_eq((**other).as_any())
+        self.dyn_eq(other.as_any())
     }
 }
 
@@ -186,27 +192,17 @@ impl ComponentBundle {
 
     pub fn iter_serializable(
         &self,
-    ) -> impl Iterator<Item = (ComponentId, &Box<dyn SerializableComponent>)> {
+    ) -> impl Iterator<Item = (ComponentId, &dyn SerializableComponent)> {
         self.iter().filter_map(|(component_id, component)| {
-            Some((
-                component_id,
-                component
-                    .as_any()
-                    .downcast_ref::<Box<dyn SerializableComponent>>()?,
-            ))
+            Some((component_id, component.as_serializable()?))
         })
     }
 
     pub fn iter_serializable_mut(
         &mut self,
-    ) -> impl Iterator<Item = (ComponentId, &mut Box<dyn SerializableComponent>)> {
+    ) -> impl Iterator<Item = (ComponentId, &mut dyn SerializableComponent)> {
         self.iter_mut().filter_map(|(component_id, component)| {
-            Some((
-                component_id,
-                component
-                    .as_any_mut()
-                    .downcast_mut::<Box<dyn SerializableComponent>>()?,
-            ))
+            Some((component_id, component.as_serializable_mut()?))
         })
     }
 
@@ -215,7 +211,7 @@ impl ComponentBundle {
             .components
             .insert(component.component_id(), Box::new(component))
         {
-            return Some(*Box::<(dyn std::any::Any + 'static)>::downcast::<T>(old_component).ok()?);
+            return Some(*Box::<(dyn Any + 'static)>::downcast::<T>(old_component).ok()?);
         }
 
         None
@@ -331,7 +327,7 @@ impl SerializableComponentBundle {
             .components
             .insert(component.component_id(), Box::new(component))
         {
-            return Some(*Box::<(dyn std::any::Any + 'static)>::downcast::<T>(old_component).ok()?);
+            return Some(*Box::<(dyn Any + 'static)>::downcast::<T>(old_component).ok()?);
         }
 
         None
