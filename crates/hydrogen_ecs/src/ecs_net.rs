@@ -113,7 +113,8 @@ impl EcsReplicator {
                 for (component_id, serializable_component) in
                     world.get_all_serializable_components(entity_id)
                 {
-                    let should_exist = replicate.replicated_components.contains(&component_id);
+                    let should_exist = component_id == Replicate::COMPONENT_ID
+                        || replicate.replicated_components.contains(&component_id);
 
                     if let Some(current_component) = current_components.get_mut(&component_id) {
                         if !should_exist {
