@@ -10,6 +10,7 @@ struct VertexInput {
     @location(1) uv: vec2<f32>,
     @location(2) tex_index: u32,
     @location(3) normal: vec3<f32>,
+    @location(4) color: vec4<f32>,
 }
 
 struct CameraUniform {
@@ -38,7 +39,7 @@ fn vert_main(
     out.clip_position = camera.view_projection * vec4<f32>(model.position, 1.0);
     out.uv = model.uv;
     out.tex_index = model.tex_index;
-    out.color = vec4<f32>(color_multiplier, color_multiplier, color_multiplier, 1.0);
+    out.color = model.color * vec4<f32>(color_multiplier, color_multiplier, color_multiplier, 1.0);
 
     return out;
 }

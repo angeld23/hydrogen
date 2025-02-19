@@ -63,6 +63,7 @@ pub struct Vertex3D {
     pub uv: [f32; 2],
     pub tex_index: u32,
     pub normal: [f32; 3],
+    pub color: [f32; 4],
 }
 
 impl Vertex3D {
@@ -71,5 +72,6 @@ impl Vertex3D {
         wgpu::VertexFormat::Float32x2,
         wgpu::VertexFormat::Uint32,
         wgpu::VertexFormat::Float32x3,
+        wgpu::VertexFormat::Float32x4,
     ];
 }
