@@ -1,9 +1,26 @@
-use std::ops::Mul;
+use std::ops::{Mul, MulAssign};
 
 use derive_more::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, From, Into, Add, Sub, Mul, Div, PartialEq)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    From,
+    Into,
+    Add,
+    AddAssign,
+    Sub,
+    SubAssign,
+    Mul,
+    MulAssign,
+    Div,
+    DivAssign,
+    PartialEq,
+)]
 pub struct RGBA {
     pub r: f32,
     pub g: f32,
@@ -32,6 +49,12 @@ impl Mul for RGBA {
             b: self.b * rhs.b,
             a: self.a * rhs.a,
         }
+    }
+}
+
+impl MulAssign for RGBA {
+    fn mul_assign(&mut self, rhs: Self) {
+        *self = *self * rhs;
     }
 }
 
