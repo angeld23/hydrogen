@@ -1,3 +1,5 @@
+use std::ops::Mul;
+
 use derive_more::*;
 use serde::{Deserialize, Serialize};
 
@@ -16,6 +18,19 @@ impl Default for RGBA {
             g: 1.0,
             b: 1.0,
             a: 1.0,
+        }
+    }
+}
+
+impl Mul for RGBA {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        Self {
+            r: self.r * rhs.r,
+            g: self.g * rhs.g,
+            b: self.b * rhs.b,
+            a: self.a * rhs.a,
         }
     }
 }
