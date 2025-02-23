@@ -96,12 +96,18 @@ impl Direction {
     /// Returns the closest [Direction] to a given [Vector3]'s direction.
     pub fn from_vector<T>(vector: Vector3<T>) -> Self
     where
-        T: Signed + PartialOrd + Copy,
+        T: std::fmt::Debug + Signed + PartialOrd + Copy,
     {
         let mut biggest = (Axis::default(), T::zero());
         for axis in Axis::ALL {
             let value = axis.get_component(vector);
             if value.abs() > biggest.1.abs() {
+                // I have absolutely no idea why, but if this if statement isn't here, what I assume to be some erroneous
+                // compiler optimization causes this function to break. For example, inputting vec3(-1.0, 0.0, 0.0) yields
+                // a direction of positive Y. Genuinely what the fuck.
+                if value.is_zero() {
+                    println!(".");
+                }
                 biggest = (axis, value);
             }
         }
