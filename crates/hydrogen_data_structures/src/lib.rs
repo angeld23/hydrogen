@@ -1,4 +1,4 @@
-#![allow(incomplete_features)]
+#![allow(incomplete_features, clippy::uninlined_format_args)]
 #![feature(generic_const_exprs)]
 
 pub mod char_indexing;

@@ -1,4 +1,5 @@
 #![feature(unsafe_cell_access)]
+#![allow(clippy::uninlined_format_args)]
 
 pub mod builder;
 pub mod component;
