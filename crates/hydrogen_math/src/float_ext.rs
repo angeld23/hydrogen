@@ -1,14 +1,12 @@
-use cgmath::{InnerSpace, Vector2, Vector3, Vector4, Zero};
+use cgmath::{ulps_eq, InnerSpace, Vector2, Vector3, Vector4, Zero};
 
 pub trait IsSmall {
-    const EPSILON: f32 = 0.001;
-
     fn is_small(&self) -> bool;
 }
 
 impl IsSmall for f32 {
     fn is_small(&self) -> bool {
-        self.abs() < Self::EPSILON
+        ulps_eq!(*self, 0.0)
     }
 }
 
