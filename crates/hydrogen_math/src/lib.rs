@@ -1,5 +1,5 @@
 #![allow(incomplete_features, dead_code)]
-#![feature(generic_const_exprs)]
+#![feature(generic_const_exprs, convert_float_to_int)]
 
 pub mod axis;
 pub mod bounding_box;

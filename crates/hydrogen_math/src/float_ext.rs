@@ -45,3 +45,40 @@ impl AddWithEpsilon for f32 {
         }
     }
 }
+
+impl AddWithEpsilon for f64 {
+    fn add_with_epsilon(self, rhs: Self) -> Self {
+        if rhs.is_zero() {
+            return self;
+        }
+
+        rhs + if rhs.is_sign_positive() {
+            self.next_up()
+        } else {
+            self.next_down()
+        }
+    }
+}
+
+pub trait NextFloat {
+    fn next_down(self) -> Self;
+    fn next_up(self) -> Self;
+}
+
+impl NextFloat for f32 {
+    fn next_down(self) -> Self {
+        self.next_down()
+    }
+    fn next_up(self) -> Self {
+        self.next_up()
+    }
+}
+
+impl NextFloat for f64 {
+    fn next_down(self) -> Self {
+        self.next_down()
+    }
+    fn next_up(self) -> Self {
+        self.next_up()
+    }
+}
