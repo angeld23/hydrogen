@@ -8,7 +8,7 @@ use crate::{
     texture::Texture,
     vertex::Vertex2D,
 };
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use hydrogen_math::bbox;
 use std::{collections::BTreeMap, rc::Rc, sync::Arc};
 use winit::{dpi::PhysicalSize, window::Window};
@@ -43,18 +43,17 @@ impl GraphicsController {
                 force_fallback_adapter: false,
                 compatible_surface: Some(&window_surface),
             },
-        ))
-        .ok_or(anyhow!("No adapter"))?;
+        ))?;
 
-        let (device, queue) = futures::executor::block_on(adapter.request_device(
-            &wgpu::DeviceDescriptor {
+        let (device, queue) =
+            futures::executor::block_on(adapter.request_device(&wgpu::DeviceDescriptor {
                 label: None,
                 required_features: wgpu::Features::CLEAR_TEXTURE,
                 required_limits: wgpu::Limits::default(),
+                experimental_features: wgpu::ExperimentalFeatures::default(),
                 memory_hints: wgpu::MemoryHints::Performance,
-            },
-            None,
-        ))?;
+                trace: wgpu::Trace::Off,
+            }))?;
 
         let window_size = window.inner_size();
         let window_surface_capabilities = window_surface.get_capabilities(&adapter);
@@ -318,6 +317,7 @@ impl GraphicsController {
                 label: Some(pipeline.descriptor.name),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: target_view,
+                    depth_slice: None,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: if clear_color {

@@ -1,6 +1,6 @@
 [package]
 name = "hydrogen_graphics"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2021"
 
 [dependencies]
@@ -40,6 +40,6 @@ winit = "0.30.8"
 hydrogen_math = { path = "../hydrogen_math" }
 serde = "1.0.204"
 hydrogen_data_structures = { path = "../hydrogen_data_structures" }
-wgpu = "24.0.1"
+wgpu = "27.0.1"
 log = "0.4.25"
 env_logger = "0.11.6"

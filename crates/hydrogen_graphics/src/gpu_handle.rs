@@ -82,7 +82,9 @@ impl GpuHandle {
             buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
                 tx.send(result).unwrap();
             });
-            self.device.poll(wgpu::Maintain::Wait);
+            self.device
+                .poll(wgpu::PollType::wait_indefinitely())
+                .unwrap();
             executor::block_on(rx).unwrap().unwrap();
 
             let view = buffer_slice.get_mapped_range();
