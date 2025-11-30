@@ -54,7 +54,7 @@ where
         self.indices.replace_contents(new_contents.indices);
     }
 
-    pub fn as_pipeline_buffers(&self) -> PipelineBuffers<T> {
+    pub fn as_pipeline_buffers(&'_ self) -> PipelineBuffers<'_, T> {
         PipelineBuffers {
             vertices: &self.vertices,
             instances: None,

@@ -73,7 +73,7 @@ where
     }
 
     /// Returns [None] if empty
-    pub fn borrow_buffer(&self) -> Option<wgpu::BufferSlice> {
+    pub fn borrow_buffer(&'_ self) -> Option<wgpu::BufferSlice<'_>> {
         if self.is_empty() {
             return None;
         }

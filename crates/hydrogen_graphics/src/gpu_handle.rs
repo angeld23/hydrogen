@@ -95,7 +95,7 @@ impl GpuHandle {
 
     pub fn read_texture(&self, texture: &wgpu::Texture) -> Vec<u8> {
         assert!(
-            texture.size().width * 4 % 256 == 0,
+            (texture.size().width * 4).is_multiple_of(256),
             "Texture row size must a be multiple of 256"
         );
 

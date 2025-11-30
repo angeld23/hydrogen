@@ -157,7 +157,7 @@ impl World {
 
     pub fn set_component<T: Component>(&mut self, entity_id: EntityId, component: T) -> Option<T> {
         if let Some(old_component) = self.set_component_boxed(entity_id, Box::new(component)) {
-            return Some(*Box::<(dyn Any + 'static)>::downcast::<T>(old_component).ok()?);
+            return Some(*Box::<dyn Any + 'static>::downcast::<T>(old_component).ok()?);
         }
 
         None

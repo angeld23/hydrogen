@@ -211,7 +211,7 @@ impl ComponentBundle {
             .components
             .insert(component.component_id(), Box::new(component))
         {
-            return Some(*Box::<(dyn Any + 'static)>::downcast::<T>(old_component).ok()?);
+            return Some(*Box::<dyn Any + 'static>::downcast::<T>(old_component).ok()?);
         }
 
         None
@@ -327,7 +327,7 @@ impl SerializableComponentBundle {
             .components
             .insert(component.component_id(), Box::new(component))
         {
-            return Some(*Box::<(dyn Any + 'static)>::downcast::<T>(old_component).ok()?);
+            return Some(*Box::<dyn Any + 'static>::downcast::<T>(old_component).ok()?);
         }
 
         None

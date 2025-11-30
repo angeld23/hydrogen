@@ -1,12 +1,12 @@
-use derive_more::*;
-use log::error;
-use serde::{Deserialize, Serialize};
 use std::{
     any::Any,
     collections::VecDeque,
     io::{self, Read, Write},
     net::{Shutdown, TcpStream},
 };
+
+use derive_more::*;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 pub use hydrogen_net_proc_macro::NetMessage;

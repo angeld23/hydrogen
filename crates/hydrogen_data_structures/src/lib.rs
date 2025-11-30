@@ -2,6 +2,7 @@
 #![feature(generic_const_exprs)]
 
 pub mod char_indexing;
+pub mod compression;
 pub mod cube_array;
 pub mod finite_state;
 pub mod indexed_container;
