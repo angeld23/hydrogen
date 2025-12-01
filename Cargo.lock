@@ -1313,7 +1313,7 @@ dependencies = [
 
 [[package]]
 name = "hydrogen_core"
-version = "0.1.6"
+version = "0.2.0"
 dependencies = [
  "cgmath",
  "derive_more",

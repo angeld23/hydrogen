@@ -28,7 +28,7 @@ pub trait AppStateHandler {
     const TICKS_PER_SECOND: f32 = 20.0;
 
     fn new(window: Arc<Window>, controllers: &mut Controllers) -> Self;
-    fn render(&mut self, delta: Duration, controllers: &mut Controllers) {}
+    fn render(&mut self, delta: Duration, tick_progress: f32, controllers: &mut Controllers) {}
     fn tick(&mut self, delta: Duration, controllers: &mut Controllers) {}
     fn winit_event(&mut self, event: WinitEvent, controllers: &mut Controllers) {}
     fn window_focus_changed(&mut self, focused: bool, controllers: &mut Controllers) {}
@@ -143,20 +143,23 @@ where
             } => {}
             WindowEvent::RedrawRequested => {
                 let frame_time = self.last_frame.elapsed();
-                self.last_frame = Instant::now();
+                let now = Instant::now();
+                self.last_frame = now;
 
                 // tick handling
                 if !self.next_tick.elapsed().is_zero() {
                     app_state.tick(self.last_tick.elapsed(), self.controllers.as_mut().unwrap());
 
-                    self.last_tick = Instant::now();
+                    self.last_tick = now;
                     self.next_tick += Duration::from_secs_f32(1.0 / T::TICKS_PER_SECOND);
                     if self.next_tick.elapsed() > Duration::from_secs_f32(20.0 / T::TICKS_PER_SECOND) {
-                        self.next_tick = Instant::now() - Duration::from_secs_f32(20.0 / T::TICKS_PER_SECOND)
+                        self.next_tick = now - Duration::from_secs_f32(20.0 / T::TICKS_PER_SECOND)
                     }
                 }
+                
+                let tick_progress = (now - self.last_tick).as_secs_f32() / (self.next_tick - self.last_tick).as_secs_f32();
                 // where the magic happens
-                app_state.render(frame_time, self.controllers.as_mut().unwrap());
+                app_state.render(frame_time, tick_progress, self.controllers.as_mut().unwrap());
 
                 // mouse logic
                 let new_mouse_locked = self.controllers.as_mut().unwrap().input_controller.is_mouse_locked();
