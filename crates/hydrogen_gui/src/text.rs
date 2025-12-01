@@ -139,6 +139,9 @@ impl std::fmt::Display for StyledText {
 }
 
 impl StyledText {
+    pub const FORMAT_CHAR: char = '§';
+    pub const NEGATE_CHAR: char = '!';
+
     pub fn single_section(text: &str, styling: TextStyling) -> Self {
         Self {
             raw_text: text.to_owned(),
@@ -147,9 +150,6 @@ impl StyledText {
     }
 
     pub fn from_format_string(text: &str) -> Self {
-        const FORMAT_CHAR: char = '§';
-        const NEGATE_CHAR: char = '!';
-
         let mut sections = Vec::<((usize, usize), TextStyling)>::new();
         let mut current_section: Option<(usize, usize)> = None;
         let mut current_styling = TextStyling::default();
@@ -163,7 +163,7 @@ impl StyledText {
                 let mut is_valid = true;
                 let old_styling = current_styling;
                 match (character, negated) {
-                    (NEGATE_CHAR, false) if !at_end => {
+                    (Self::NEGATE_CHAR, false) if !at_end => {
                         negated = true;
                         continue 'char_loop;
                     }
@@ -223,7 +223,7 @@ impl StyledText {
 
                     continue 'char_loop;
                 }
-            } else if character == FORMAT_CHAR && !at_end {
+            } else if character == Self::FORMAT_CHAR && !at_end {
                 format_expected = true;
                 continue 'char_loop;
             }
