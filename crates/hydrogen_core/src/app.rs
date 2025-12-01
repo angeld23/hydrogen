@@ -28,11 +28,12 @@ pub trait AppStateHandler {
     const TICKS_PER_SECOND: f32 = 20.0;
 
     fn new(window: Arc<Window>, controllers: &mut Controllers) -> Self;
+    /// On frames where a tick occurs, this runs *before* [`AppStateHandler::render`].
+    fn tick(&mut self, delta: Duration, controllers: &mut Controllers) {}
     /// - `delta`: The time since the last render call.
     /// - `tick_progress`: A value within `[0, 1)` representing how far we are between the last tick and
     ///   the next tick. This is *always* `0.0` if and only if a tick just occurred.
     fn render(&mut self, delta: Duration, tick_progress: f32, controllers: &mut Controllers) {}
-    fn tick(&mut self, delta: Duration, controllers: &mut Controllers) {}
     fn winit_event(&mut self, event: WinitEvent, controllers: &mut Controllers) {}
     fn window_focus_changed(&mut self, focused: bool, controllers: &mut Controllers) {}
 }
