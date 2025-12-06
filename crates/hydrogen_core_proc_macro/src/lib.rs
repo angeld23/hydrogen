@@ -73,8 +73,7 @@ pub fn dependency(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         match (has_dep, has_dep_mut) {
             (false, false) => quote! {},
             (true, false) => dep_impl,
-            (false, true) => dep_mut_impl,
-            (true, true) => quote! {
+            (true, true) | (false, true) => quote! {
                 #dep_impl
                 #dep_mut_impl
             },

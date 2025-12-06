@@ -1,6 +1,6 @@
 [package]
-name = "hydrogen_core_proc_macro"
-version = "0.2.0"
+name = "hydrogen_debug_proc_macro"
+version = "0.1.0"
 edition = "2021"
 
 [lib]

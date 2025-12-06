@@ -45,10 +45,8 @@ pub struct AppDescriptor {
 
 #[derive(Debug, DependencyProvider)]
 pub struct Controllers {
-    #[dep]
     #[dep_mut]
     pub graphics_controller: GraphicsController,
-    #[dep]
     #[dep_mut]
     pub input_controller: InputController,
 }
@@ -153,6 +151,8 @@ where
                 // tick handling
                 if !self.next_tick.elapsed().is_zero() {
                     app_state.tick(self.last_tick.elapsed(), self.controllers.as_mut().unwrap());
+
+                    self.controllers.as_mut().unwrap().input_controller.tick();
 
                     self.last_tick = now;
                     self.next_tick += Duration::from_secs_f32(1.0 / T::TICKS_PER_SECOND);

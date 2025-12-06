@@ -2,7 +2,7 @@ use crate::app::WinitEvent;
 use cgmath::{vec2, Vector2};
 use derive_more::*;
 use hydrogen_math::bounding_box::BBox2;
-use linear_map::set::LinearSet;
+use linear_map::LinearMap;
 use winit::{
     dpi::PhysicalPosition,
     event::{DeviceEvent, Ime, MouseButton, MouseScrollDelta, WindowEvent},
@@ -52,10 +52,11 @@ impl From<&String> for Input {
 
 #[derive(Debug)]
 pub struct InputController {
-    held_inputs: LinearSet<Input>,
-    pressed_inputs: LinearSet<Input>,
-    pressed_or_repeated_inputs: LinearSet<Input>,
-    released_inputs: LinearSet<Input>,
+    // (input -> was_last_frame)
+    held_inputs: LinearMap<Input, bool>,
+    pressed_inputs: LinearMap<Input, bool>,
+    pressed_or_repeated_inputs: LinearMap<Input, bool>,
+    released_inputs: LinearMap<Input, bool>,
 
     mouse_delta: Vector2<f32>,
     scroll_delta: f32,
@@ -63,6 +64,7 @@ pub struct InputController {
     cursor_in_window: bool,
 
     just_typed: String,
+    just_typed_this_tick: String,
     focused_component_id: Option<GuiComponentId>,
     contested_hover: Option<(GuiComponentId, BBox2)>,
     hovered_component_id: Option<GuiComponentId>,
@@ -84,6 +86,7 @@ impl Default for InputController {
             cursor_in_window: false,
 
             just_typed: Default::default(),
+            just_typed_this_tick: Default::default(),
             focused_component_id: None,
             contested_hover: None,
             hovered_component_id: None,
@@ -94,17 +97,40 @@ impl Default for InputController {
 }
 
 macro_rules! input_is {
-    ($fn_name:ident, $set:ident) => {
+    ($fn_name:ident, $tick_fn_name:ident, $map:ident) => {
         pub fn $fn_name(&self, input: impl Into<Input>) -> bool {
-            self.$set.contains(&input.into())
+            self.$map.get(&input.into()) == Some(&true)
+        }
+
+        pub fn $tick_fn_name(&self, input: impl Into<Input>) -> bool {
+            self.$map.contains_key(&input.into())
         }
     };
 }
 
 macro_rules! consume {
-    ($fn_name:ident, $set:ident) => {
+    ($fn_name:ident, $tick_fn_name:ident, $map:ident) => {
         pub fn $fn_name(&mut self, input: impl Into<Input>) -> bool {
-            self.$set.remove(&input.into())
+            self.$map.remove(&input.into()) == Some(true)
+        }
+
+        pub fn $tick_fn_name(&mut self, input: impl Into<Input>) -> bool {
+            self.$map.remove(&input.into()).is_some()
+        }
+    };
+}
+
+macro_rules! get_all {
+    ($fn_name:ident, $tick_fn_name:ident, $map:ident) => {
+        pub fn $fn_name(&mut self) -> Vec<Input> {
+            self.$map
+                .iter()
+                .filter_map(|(input, &was_last_frame)| was_last_frame.then_some(input.clone()))
+                .collect()
+        }
+
+        pub fn $tick_fn_name(&self) -> Vec<Input> {
+            self.$map.keys().cloned().collect()
         }
     };
 }
@@ -118,15 +144,23 @@ impl InputController {
         self.focused_component_id.is_none() && !self.in_a_menu
     }
 
-    input_is!(held, held_inputs);
-    input_is!(pressed, pressed_inputs);
-    input_is!(pressed_or_repeated, pressed_or_repeated_inputs);
-    input_is!(released, released_inputs);
+    input_is!(held, held_tick, held_inputs);
+    input_is!(pressed, pressed_tick, pressed_inputs);
+    input_is!(
+        pressed_or_repeated,
+        pressed_or_repeated_tick,
+        pressed_or_repeated_inputs
+    );
+    input_is!(released, released_tick, released_inputs);
 
-    consume!(consume_held, held_inputs);
-    consume!(consume_pressed, pressed_inputs);
-    consume!(consume_pressed_or_released, pressed_or_repeated_inputs);
-    consume!(consume_released, released_inputs);
+    consume!(consume_held, consume_held_tick, held_inputs);
+    consume!(consume_pressed, consume_pressed_tick, pressed_inputs);
+    consume!(
+        consume_pressed_or_released,
+        consume_pressed_or_released_tick,
+        pressed_or_repeated_inputs
+    );
+    consume!(consume_released, consume_released_tick, released_inputs);
 
     pub fn consume_input(&mut self, input: impl Into<Input>) -> bool {
         let input = input.into();
@@ -140,21 +174,26 @@ impl InputController {
         consumed
     }
 
-    pub fn all_held(&self) -> &LinearSet<Input> {
-        &self.held_inputs
+    pub fn consume_input_tick(&mut self, input: impl Into<Input>) -> bool {
+        let input = input.into();
+
+        let mut consumed = false;
+        consumed |= self.consume_held_tick(input.clone());
+        consumed |= self.consume_pressed_tick(input.clone());
+        consumed |= self.consume_pressed_or_released_tick(input.clone());
+        consumed |= self.consume_released_tick(input);
+
+        consumed
     }
 
-    pub fn all_pressed(&self) -> &LinearSet<Input> {
-        &self.pressed_inputs
-    }
-
-    pub fn all_pressed_or_repeated(&self) -> &LinearSet<Input> {
-        &self.pressed_or_repeated_inputs
-    }
-
-    pub fn all_released(&self) -> &LinearSet<Input> {
-        &self.released_inputs
-    }
+    get_all!(all_held, all_held_tick, held_inputs);
+    get_all!(all_pressed, all_pressed_tick, pressed_inputs);
+    get_all!(
+        all_pressed_or_repeated,
+        all_pressed_or_repeated_tick,
+        pressed_or_repeated_inputs
+    );
+    get_all!(all_released, all_released_tick, released_inputs);
 
     /// Only valid if mouse is locked
     pub fn mouse_delta(&self) -> Vector2<f32> {
@@ -173,17 +212,55 @@ impl InputController {
         &self.just_typed
     }
 
+    pub fn just_typed_tick(&self) -> &str {
+        &self.just_typed_this_tick
+    }
+
     pub fn emulate_just_typed(&mut self, text: &str) {
         self.just_typed.push_str(text);
+        self.just_typed_this_tick.push_str(text);
+    }
+
+    pub fn tick(&mut self) {
+        self.just_typed_this_tick.clear();
+
+        for map in [
+            &mut self.held_inputs,
+            &mut self.pressed_inputs,
+            &mut self.pressed_or_repeated_inputs,
+            &mut self.released_inputs,
+        ] {
+            let keys_to_remove: Vec<Input> = map
+                .iter()
+                .filter_map(|(input, was_last_frame)| {
+                    if !was_last_frame {
+                        Some(input.clone())
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+
+            for key in keys_to_remove {
+                map.remove(&key);
+            }
+        }
     }
 
     pub fn clear_inputs(&mut self) {
         self.mouse_delta = vec2(0.0, 0.0);
         self.scroll_delta = 0.0;
 
-        self.pressed_inputs.clear();
-        self.pressed_or_repeated_inputs.clear();
-        self.released_inputs.clear();
+        for map in [
+            //&mut self.held_inputs,
+            &mut self.pressed_inputs,
+            &mut self.pressed_or_repeated_inputs,
+            &mut self.released_inputs,
+        ] {
+            for (_, was_last_frame) in map.iter_mut() {
+                *was_last_frame = false;
+            }
+        }
 
         self.just_typed.clear();
 
@@ -279,13 +356,15 @@ impl InputController {
                         }
 
                         if !event.repeat {
-                            self.held_inputs.insert(input.clone());
-                            self.pressed_inputs.insert(input.clone());
+                            self.held_inputs.insert(input.clone(), true);
+                            self.pressed_inputs.insert(input.clone(), true);
                         }
-                        self.pressed_or_repeated_inputs.insert(input);
+                        self.pressed_or_repeated_inputs.insert(input, true);
                     } else {
-                        self.held_inputs.remove(&input);
-                        self.released_inputs.insert(input);
+                        if self.held_inputs.get(&input).is_some() {
+                            self.held_inputs.insert(input.clone(), false);
+                        }
+                        self.released_inputs.insert(input, true);
                     }
                 }
                 WindowEvent::MouseInput { state, button, .. } => {
@@ -293,12 +372,15 @@ impl InputController {
                         if !self.cursor_in_window {
                             return;
                         }
-                        self.held_inputs.insert((*button).into());
-                        self.pressed_inputs.insert((*button).into());
-                        self.pressed_or_repeated_inputs.insert((*button).into());
+                        self.held_inputs.insert((*button).into(), true);
+                        self.pressed_inputs.insert((*button).into(), true);
+                        self.pressed_or_repeated_inputs
+                            .insert((*button).into(), true);
                     } else {
-                        self.held_inputs.remove(&(*button).into());
-                        self.released_inputs.insert((*button).into());
+                        if self.held_inputs.get(&(*button).into()).is_some() {
+                            self.held_inputs.insert((*button).into(), false);
+                        }
+                        self.released_inputs.insert((*button).into(), true);
                     };
                 }
                 WindowEvent::CursorEntered { .. } => {

@@ -1,5 +1,5 @@
 use crate::{axis::Axis, direction::Direction, sign::Sign};
-use cgmath::Matrix3;
+use cgmath::{num_traits::Signed, BaseFloat, Deg, Matrix3, Rotation3};
 use serde::{Deserialize, Serialize};
 
 /// Maps each of the six [Direction]s to a value. All [Direction]s must be mapped to a value.
@@ -121,15 +121,28 @@ impl<T> DirectionMap<T> {
         std::mem::replace(self.get_mut(direction), value)
     }
 
-    /// "Rotates" the map using a 3x3 rotation matrix.
-    pub fn rotate(&mut self, matrix: Matrix3<f32>)
+    /// "Rotates" the map using a transform.
+    pub fn rotate<F: BaseFloat + Signed + Default>(&mut self, transform: impl Rotation3<Scalar = F>)
     where
         T: Default,
     {
         let old_self = std::mem::take(self);
 
         for (direction, value) in old_self.into_iter() {
-            let transformed_normal = matrix * direction.normal();
+            let transformed_normal = transform.rotate_vector(direction.normal::<F>());
+            self.set(Direction::from_vector(transformed_normal), value);
+        }
+    }
+
+    /// "Rotates" the map using a rotation matrix.
+    pub fn rotate_with_matrix<F: BaseFloat + Signed + Default>(&mut self, matrix: Matrix3<F>)
+    where
+        T: Default,
+    {
+        let old_self = std::mem::take(self);
+
+        for (direction, value) in old_self.into_iter() {
+            let transformed_normal = matrix * direction.normal::<F>();
             self.set(Direction::from_vector(transformed_normal), value);
         }
     }
@@ -151,6 +164,8 @@ impl<T> IntoIterator for DirectionMap<T> {
     /// Consumes the map and creates an iterator over each value paired with
     /// its corresponding [Direction].
     fn into_iter(self) -> Self::IntoIter {
+        DirectionMap::uniform(&1).rotate_with_matrix(Matrix3::from_angle_x(Deg(1f32)));
+
         [
             (Direction::POS.x, self.pos_x),
             (Direction::NEG.x, self.neg_x),
