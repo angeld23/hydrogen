@@ -2,15 +2,14 @@ use const_fnv1a_hash::fnv1a_hash_str_64;
 use quote::quote;
 use syn::{parse_macro_input, DeriveInput};
 
-#[proc_macro_derive(Component, attributes(local_component))]
-pub fn component(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+fn common_component(input: &DeriveInput) -> proc_macro2::TokenStream {
     let DeriveInput {
         attrs: _,
         vis: _,
         ident,
         generics,
         data: _,
-    } = parse_macro_input!(input as DeriveInput);
+    } = input;
 
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
     let component_id = fnv1a_hash_str_64(&ident.to_string());
@@ -20,7 +19,43 @@ pub fn component(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         impl #impl_generics #ident #ty_generics #where_clause {
             pub const COMPONENT_ID: hydrogen::ecs::component::ComponentId = hydrogen::ecs::component::ComponentId(#component_id);
             pub const DISPLAY_NAME: &'static str = #display_name;
+
+            pub fn query_one(
+                ecs: &hydrogen::ecs::world::World,
+                entity_id: hydrogen::ecs::entity::EntityId,
+            ) -> Option<&Self> {
+                hydrogen::ecs::query_one!(ecs, entity_id, #ident).map(|(c,)| c)
+            }
+
+            pub fn query_one_mut(
+                ecs: &mut hydrogen::ecs::world::World,
+                entity_id: hydrogen::ecs::entity::EntityId,
+            ) -> Option<&mut Self> {
+                hydrogen::ecs::query_one_mut!(ecs, entity_id, #ident).map(|(c,)| c)
+            }
         }
+    }
+}
+
+#[proc_macro_derive(Component)]
+pub fn component(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let common = common_component(&input);
+
+    let DeriveInput {
+        attrs: _,
+        vis: _,
+        ident,
+        generics,
+        data: _,
+    } = input;
+
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+    let component_id = fnv1a_hash_str_64(&ident.to_string());
+    let display_name = ident.to_string();
+
+    quote! {
+        #common
 
         impl #impl_generics hydrogen::ecs::component::Component for #ident #ty_generics #where_clause {
             fn component_id(&self) -> hydrogen::ecs::component::ComponentId {
@@ -45,25 +80,25 @@ pub fn component(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     }.into()
 }
 
-#[proc_macro_derive(SerializableComponent, attributes(local_component))]
+#[proc_macro_derive(SerializableComponent)]
 pub fn serializable_component(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let common = common_component(&input);
+
     let DeriveInput {
         attrs: _,
         vis: _,
         ident,
         generics,
         data: _,
-    } = parse_macro_input!(input as DeriveInput);
+    } = input;
 
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
     let component_id = fnv1a_hash_str_64(&ident.to_string());
     let display_name = ident.to_string();
 
     quote! {
-        impl #impl_generics #ident #ty_generics #where_clause {
-            pub const COMPONENT_ID: hydrogen::ecs::component::ComponentId = hydrogen::ecs::component::ComponentId(#component_id);
-            pub const DISPLAY_NAME: &'static str = #display_name;
-        }
+        #common
 
         impl #impl_generics hydrogen::ecs::component::Component for #ident #ty_generics #where_clause {
             fn component_id(&self) -> hydrogen::ecs::component::ComponentId {
