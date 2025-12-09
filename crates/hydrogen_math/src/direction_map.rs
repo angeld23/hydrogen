@@ -164,8 +164,6 @@ impl<T> IntoIterator for DirectionMap<T> {
     /// Consumes the map and creates an iterator over each value paired with
     /// its corresponding [Direction].
     fn into_iter(self) -> Self::IntoIter {
-        DirectionMap::uniform(&1).rotate_with_matrix(Matrix3::from_angle_x(Deg(1f32)));
-
         [
             (Direction::POS.x, self.pos_x),
             (Direction::NEG.x, self.neg_x),
