@@ -1,5 +1,5 @@
 use crate::{axis::Axis, direction::Direction, sign::Sign};
-use cgmath::{num_traits::Signed, BaseFloat, Deg, Matrix3, Rotation3};
+use cgmath::{num_traits::Signed, BaseFloat, Matrix3, Rotation3};
 use serde::{Deserialize, Serialize};
 
 /// Maps each of the six [Direction]s to a value. All [Direction]s must be mapped to a value.
