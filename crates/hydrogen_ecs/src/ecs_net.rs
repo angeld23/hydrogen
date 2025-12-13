@@ -163,13 +163,13 @@ impl EcsReplicator {
         }
 
         for (server_entity_id, component_id) in components_to_delete {
-            if let Some(current_components) = self.current_entities.get_mut(&server_entity_id) {
-                if current_components.remove(&component_id).is_some() {
-                    comm.send(NetEcsCommand::DeleteComponent(
-                        server_entity_id,
-                        component_id,
-                    ));
-                }
+            if let Some(current_components) = self.current_entities.get_mut(&server_entity_id)
+                && current_components.remove(&component_id).is_some()
+            {
+                comm.send(NetEcsCommand::DeleteComponent(
+                    server_entity_id,
+                    component_id,
+                ));
             }
         }
     }
@@ -249,21 +249,20 @@ impl EcsReplicator {
         entity_id: EntityId,
         component_id: ComponentId,
     ) -> bool {
-        if let Some(component) = world.get_component(entity_id, component_id) {
-            if let Some(serializeable_component) = component
+        if let Some(component) = world.get_component(entity_id, component_id)
+            && let Some(serializeable_component) = component
                 .as_any()
                 .downcast_ref::<Box<dyn SerializableComponent>>()
-            {
-                comm.send(NetEcsCommand::SetComponent(
-                    entity_id.into(),
-                    serializeable_component.clone(),
-                ));
-                self.current_entities
-                    .entry(entity_id.into())
-                    .or_default()
-                    .insert(component_id, serializeable_component.clone());
-                return true;
-            }
+        {
+            comm.send(NetEcsCommand::SetComponent(
+                entity_id.into(),
+                serializeable_component.clone(),
+            ));
+            self.current_entities
+                .entry(entity_id.into())
+                .or_default()
+                .insert(component_id, serializeable_component.clone());
+            return true;
         }
         false
     }

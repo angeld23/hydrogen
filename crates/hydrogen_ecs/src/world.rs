@@ -1,8 +1,10 @@
 use std::{any::Any, array, collections::BTreeMap};
 
+use hydrogen_core::events::EventSender;
 use hydrogen_net::server_client::ClientId;
 
 use crate::{
+    change_tracker::{ComponentTrackerEvent, GlobalComponentTracker},
     component::{Component, ComponentId, ComponentSet, SerializableComponent},
     ecs_net::{NetEcsCommand, Replicate, ServerEntityId},
     entity::EntityId,
@@ -17,6 +19,7 @@ pub struct World {
     components: BTreeMap<ComponentId, ComponentSet>,
     server_entity_id_map: BTreeMap<ServerEntityId, EntityId>,
     next_entity_id: u32,
+    change_tracker: GlobalComponentTracker,
 }
 
 impl World {
@@ -331,6 +334,54 @@ impl World {
             ))
         })
     }
+
+    pub fn update_change_tracker(&self) {
+        self.change_tracker.update(self);
+    }
+
+    pub fn update_entity_change_tracker(&self, entity_id: EntityId) {
+        self.change_tracker.update_entity(self, entity_id);
+    }
+
+    pub fn update_entity_component_change_tracker(
+        &self,
+        entity_id: EntityId,
+        component_id: ComponentId,
+    ) {
+        self.change_tracker
+            .update_entity_component(self, entity_id, component_id);
+    }
+
+    /// # Safety
+    ///
+    /// The caller must ensure that `T` is the concrete type associated with `component_id`.
+    ///
+    /// Always just use `T::COMPONENT_ID` for the `component_id` argument.
+    pub unsafe fn get_component_changed_event_sender_typed<T>(
+        &self,
+        entity_id: EntityId,
+        component_id: ComponentId,
+    ) -> &EventSender<ComponentTrackerEvent<T>> {
+        unsafe {
+            self.change_tracker
+                .get_event_sender_typed::<T>(entity_id, component_id)
+        }
+    }
+
+    pub fn get_component_changed_event_sender(
+        &self,
+        entity_id: EntityId,
+        component_id: ComponentId,
+    ) -> &EventSender<ComponentTrackerEvent<dyn SerializableComponent>> {
+        self.change_tracker
+            .get_event_sender(entity_id, component_id)
+    }
+
+    pub fn get_entity_from_component(&self, component: &impl Component) -> Option<EntityId> {
+        self.components
+            .get(&component.component_id())?
+            .get_entity_from_component(component)
+    }
 }
 
 #[macro_export]
@@ -389,4 +440,16 @@ macro_rules! query_one_mut {
     };
 }
 
-pub use {query, query_mut, query_one, query_one_mut};
+#[macro_export]
+macro_rules! get_component_changed_event_sender {
+    ($world:expr, $entity_id:expr, $component:ty) => {
+        unsafe {
+            $world.get_component_changed_event_sender_typed::<$component>(
+                $entity_id,
+                <$component>::COMPONENT_ID,
+            )
+        }
+    };
+}
+
+pub use {get_component_changed_event_sender, query, query_mut, query_one, query_one_mut};

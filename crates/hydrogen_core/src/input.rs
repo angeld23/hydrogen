@@ -1,5 +1,5 @@
 use crate::app::WinitEvent;
-use cgmath::{vec2, Vector2};
+use cgmath::{Vector2, vec2};
 use derive_more::*;
 use hydrogen_math::bounding_box::BBox2;
 use linear_map::LinearMap;
@@ -333,11 +333,11 @@ impl InputController {
         match winit_event {
             WinitEvent::Window(event) => match event {
                 WindowEvent::KeyboardInput { event, .. } => {
-                    if self.cursor_in_window {
-                        if let Some(ref text) = event.text {
-                            for character in text.chars() {
-                                self.just_typed.push(character);
-                            }
+                    if self.cursor_in_window
+                        && let Some(ref text) = event.text
+                    {
+                        for character in text.chars() {
+                            self.just_typed.push(character);
                         }
                     }
 

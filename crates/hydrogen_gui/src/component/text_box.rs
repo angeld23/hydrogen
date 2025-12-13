@@ -188,15 +188,14 @@ impl TextBox {
                         '\u{8}' => {
                             if has_selection {
                                 clear_selection!();
-                            } else if self.cursor_position > 0 {
-                                if let Some(byte_index) = self
+                            } else if self.cursor_position > 0
+                                && let Some(byte_index) = self
                                     .current_input
                                     .char_to_byte_index(self.cursor_position - 1)
-                                {
-                                    self.current_input.remove(byte_index);
-                                    self.cursor_position -= 1;
-                                    self.selection_anchor -= 1;
-                                }
+                            {
+                                self.current_input.remove(byte_index);
+                                self.cursor_position -= 1;
+                                self.selection_anchor -= 1;
                             }
                             continue 'char_loop;
                         }

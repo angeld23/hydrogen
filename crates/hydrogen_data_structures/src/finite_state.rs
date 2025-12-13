@@ -320,21 +320,16 @@ impl FStateDefinition {
                 // convert owned value to borrowed value
                 if let Ok(property_variant_index) =
                     propery_definition.kind.get_owned_variant_index(value)
-                {
-                    if let Some(borrowed_value) = propery_definition
+                    && let Some(borrowed_value) = propery_definition
                         .kind
                         .get_variant_value(property_variant_index)
-                    {
-                        // just keep creating a new state for setting each property using variant_index_after_property_set
-                        // kinda hacky but whatever
-                        if let Ok(new_variant_index) =
-                            state.variant_index_after_property_set(key, borrowed_value)
-                        {
-                            if let Some(new_state) = self.get_variant_state(new_variant_index) {
-                                state = new_state;
-                            }
-                        }
-                    }
+                    // just keep creating a new state for setting each property using variant_index_after_property_set
+                    // kinda hacky but whatever
+                    && let Ok(new_variant_index) =
+                        state.variant_index_after_property_set(key, borrowed_value)
+                        && let Some(new_state) = self.get_variant_state(new_variant_index)
+                {
+                    state = new_state;
                 }
             }
         }

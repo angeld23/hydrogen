@@ -1,6 +1,6 @@
 use const_fnv1a_hash::fnv1a_hash_str_64;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput};
+use syn::{DeriveInput, parse_macro_input};
 
 fn common_component(input: &DeriveInput) -> proc_macro2::TokenStream {
     let DeriveInput {
@@ -32,6 +32,14 @@ fn common_component(input: &DeriveInput) -> proc_macro2::TokenStream {
                 entity_id: hydrogen::ecs::entity::EntityId,
             ) -> Option<&mut Self> {
                 hydrogen::ecs::query_one_mut!(ecs, entity_id, #ident).map(|(c,)| c)
+            }
+
+            pub fn query(ecs: &hydrogen::ecs::world::World) -> impl Iterator<Item = (hydrogen::ecs::entity::EntityId, &Self)> {
+                hydrogen::ecs::query!(ecs, #ident).map(|(e, (c,))| (e, c))
+            }
+
+            pub fn query_mut(ecs: &mut hydrogen::ecs::world::World) -> impl Iterator<Item = (hydrogen::ecs::entity::EntityId, &mut Self)> {
+                hydrogen::ecs::query_mut!(ecs, #ident).map(|(e, (c,))| (e, c))
             }
         }
     }

@@ -7,7 +7,7 @@ use std::{
     any::Any,
     array,
     collections::{BTreeMap, VecDeque},
-    fmt, mem,
+    fmt, mem, ptr,
 };
 
 pub use hydrogen_ecs_proc_macro::{Component, SerializableComponent};
@@ -82,6 +82,29 @@ impl ComponentSet {
         let index = entity_id.0 as usize;
 
         matches!(self.entity_component_indices.get(index), Some(Some(_)))
+    }
+
+    pub fn has_component_instance(&self, component: &impl Component) -> bool {
+        self.components.iter().any(|c| {
+            if let Some(other_component) = c {
+                // check to see if the pointers match
+                ptr::eq(other_component.as_ref(), component as *const dyn Component)
+            } else {
+                false
+            }
+        })
+    }
+
+    pub fn get_entity_from_component(&self, component: &impl Component) -> Option<EntityId> {
+        self.entity_component_indices.iter().enumerate().find_map(
+            |(entity_id, &component_index)| {
+                ptr::eq(
+                    self.components.get(component_index?)?.as_ref()?.as_ref(),
+                    component as *const dyn Component,
+                )
+                .then_some(entity_id.into())
+            },
+        )
     }
 
     pub fn entity_component_indices(&self) -> &Vec<Option<usize>> {
