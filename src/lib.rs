@@ -1,3 +1,4 @@
+pub use hydrogen_app as app;
 pub use hydrogen_core as core;
 pub use hydrogen_data_structures as data_structures;
 pub use hydrogen_debug as debug;

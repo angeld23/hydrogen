@@ -1,14 +1,13 @@
 [package]
-name = "hydrogen_core"
-version = "0.5.0"
+name = "hydrogen_app"
+version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-cgmath = "0.18.0"
-linear-map = "1.2.0"
-serde = "1.0.204"
 winit = "0.30.8"
+hydrogen_core = { path = "../hydrogen_core" }
 hydrogen_math = { path = "../hydrogen_math" }
+hydrogen_graphics = { path = "../hydrogen_graphics" }
 derive_more = { version = "2.0.1", features = [
     "add",
     "add_assign",
@@ -34,5 +33,6 @@ derive_more = { version = "2.0.1", features = [
     "try_unwrap",
     "unwrap",
 ] }
+linear-map = "1.2.0"
+cgmath = "0.18.0"
 rand = "0.9.0"
-hydrogen_core_proc_macro = { path = "../hydrogen_core_proc_macro" }

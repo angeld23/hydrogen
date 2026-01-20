@@ -1,10 +1,17 @@
-use crate::text::{TextLabel, TextStyling};
-use hydrogen_core::input::{GuiComponentId, InputController};
+use std::time::{Duration, Instant};
+
+use hydrogen_app::input::{GuiComponentId, InputController};
+use hydrogen_core::global_dep;
 use hydrogen_data_structures::char_indexing::CharIndexing;
 use hydrogen_graphics::color::RGBA;
 use log::debug;
-use std::time::{Duration, Instant};
 use winit::keyboard::NamedKey;
+
+use crate::text::{TextLabel, TextStyling};
+
+mod hydrogen {
+    pub use hydrogen_core as core;
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TextBoxDescriptor {
@@ -102,7 +109,9 @@ impl TextBox {
         self.selection_anchor = 0;
     }
 
-    pub fn update(&mut self, input_controller: &InputController) {
+    pub fn update(&mut self) {
+        let input_controller = global_dep!(InputController);
+
         let is_focused = input_controller.component_is_focused(self.id);
         self.is_focused = is_focused;
 

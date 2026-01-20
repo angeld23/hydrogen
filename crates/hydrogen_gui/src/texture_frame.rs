@@ -12,14 +12,13 @@ pub struct TextureFrame {
     pub section: OrientedSection,
 }
 
-impl<D> GuiElement<D> for TextureFrame {
+impl GuiElement for TextureFrame {
     fn transform(&self) -> GuiTransform {
         self.transform
     }
 
-    fn render(&self, context: &mut GuiContext<D>) -> Vec<GuiPrimitive> {
-        let GuiContext { frame, .. } = context;
-        let frame = *frame;
+    fn render(&self, context: &GuiContext) -> Vec<GuiPrimitive> {
+        let frame = context.frame();
 
         vec![GuiPrimitive {
             absolute_position: self.transform.absolute_position(frame),

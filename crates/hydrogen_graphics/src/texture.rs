@@ -1,9 +1,14 @@
 use std::collections::BTreeMap;
 
 use crate::gpu_handle::GpuHandle;
+use hydrogen_core::global_dep;
 use image::{DynamicImage, GenericImageView};
 use include_dir::include_dir;
 use lazy_static::lazy_static;
+
+mod hydrogen {
+    pub use hydrogen_core as core;
+}
 
 #[derive(Debug)]
 pub struct Texture {
@@ -94,10 +99,11 @@ impl Texture {
     ];
 
     pub fn new(
-        handle: &GpuHandle,
         texture_descriptor: &wgpu::TextureDescriptor,
         sampler_descriptor: &wgpu::SamplerDescriptor,
     ) -> Self {
+        let handle = global_dep!(GpuHandle);
+
         let texture = handle.device.create_texture(texture_descriptor);
         let view = texture.create_view(&Default::default());
         let sampler = handle.device.create_sampler(sampler_descriptor);
@@ -110,11 +116,12 @@ impl Texture {
     }
 
     pub fn from_image(
-        handle: &GpuHandle,
         img: &image::DynamicImage,
         texture_descriptor: &wgpu::TextureDescriptor,
         sampler_descriptor: &wgpu::SamplerDescriptor,
     ) -> Self {
+        let handle = global_dep!(GpuHandle);
+
         let rgba = img.to_rgba8();
         let dimensions = img.dimensions();
 
@@ -160,7 +167,7 @@ impl Texture {
         }
     }
 
-    pub fn create_depth_texture(handle: &GpuHandle, width: u32, height: u32) -> Self {
+    pub fn create_depth_texture(width: u32, height: u32) -> Self {
         let size = wgpu::Extent3d {
             width,
             height,
@@ -168,7 +175,6 @@ impl Texture {
         };
 
         Self::new(
-            handle,
             &wgpu::TextureDescriptor {
                 size,
                 ..*TEXTURE_DEPTH
@@ -177,7 +183,9 @@ impl Texture {
         )
     }
 
-    pub fn clone(&self, handle: &GpuHandle, sampler_descriptor: &wgpu::SamplerDescriptor) -> Self {
+    pub fn clone(&self, sampler_descriptor: &wgpu::SamplerDescriptor) -> Self {
+        let handle = global_dep!(GpuHandle);
+
         let texture = handle.device.create_texture(&wgpu::TextureDescriptor {
             label: None,
             size: self.inner_texture.size(),

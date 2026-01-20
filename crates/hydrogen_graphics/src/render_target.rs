@@ -1,6 +1,6 @@
-use cgmath::{vec2, Vector2};
+use cgmath::{Vector2, vec2};
 
-use crate::{gpu_handle::GpuHandle, texture::Texture};
+use crate::texture::Texture;
 use std::cell::Cell;
 
 #[derive(Debug)]
@@ -13,10 +13,9 @@ pub struct RenderTarget {
 }
 
 impl RenderTarget {
-    pub fn new(handle: &GpuHandle, texture: Texture) -> Self {
+    pub fn new(texture: Texture) -> Self {
         Self {
             depth_texture: Some(Texture::create_depth_texture(
-                handle,
                 texture.inner_texture.width(),
                 texture.inner_texture.height(),
             )),

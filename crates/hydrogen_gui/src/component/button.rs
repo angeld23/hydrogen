@@ -1,11 +1,13 @@
-use hydrogen_core::{
-    dependency::DependencyMut,
-    input::{GuiComponentId, InputController},
-};
+use hydrogen_app::input::{GuiComponentId, InputController};
+use hydrogen_core::global_dep;
 use hydrogen_math::bbox;
 use winit::event::MouseButton;
 
 use crate::{element::GuiContext, transform::GuiTransform};
+
+mod hydrogen {
+    pub use hydrogen_core as core;
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Button {
@@ -41,14 +43,11 @@ impl Button {
         }
     }
 
-    pub fn update<D>(&mut self, context: &mut GuiContext<D>, transform: GuiTransform)
-    where
-        D: DependencyMut<InputController>,
-    {
+    pub fn update(&mut self, context: &GuiContext, transform: GuiTransform) {
         let (absolute_position, absolute_size) = context.absolute(transform);
         let bounding_box = bbox!(absolute_position, absolute_position + absolute_size);
 
-        let input_controller = context.dep_mut();
+        let mut input_controller = global_dep!(mut InputController);
 
         // contest for next frame
         input_controller.contest_mouse_hover(self.id, bounding_box);

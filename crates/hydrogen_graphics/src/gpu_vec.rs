@@ -1,15 +1,19 @@
+use hydrogen_core::global_dep;
 use wgpu::util::DeviceExt;
 
-use crate::gpu_handle::GpuHandle;
 use std::{mem, ops::Range};
+
+use crate::gpu_handle::GpuHandle;
+
+mod hydrogen {
+    pub use hydrogen_core as core;
+}
 
 #[derive(Debug)]
 pub struct GpuVec<T>
 where
     T: bytemuck::NoUninit,
 {
-    handle: GpuHandle,
-
     inner_buffer: wgpu::Buffer,
     inner_vec: Vec<T>,
 }
@@ -18,11 +22,9 @@ impl<T> GpuVec<T>
 where
     T: bytemuck::NoUninit,
 {
-    fn create_buffer(
-        handle: &GpuHandle,
-        usage: wgpu::BufferUsages,
-        inner_vec: &Vec<T>,
-    ) -> wgpu::Buffer {
+    fn create_buffer(usage: wgpu::BufferUsages, inner_vec: &Vec<T>) -> wgpu::Buffer {
+        let handle = global_dep!(GpuHandle);
+
         let mut buffer_data = vec![0u8; inner_vec.capacity() * mem::size_of::<T>()];
 
         let initialized_bytes = bytemuck::cast_slice(inner_vec.as_slice());
@@ -37,19 +39,29 @@ where
             })
     }
 
-    pub fn new(handle: &GpuHandle, usage: wgpu::BufferUsages, contents: Vec<T>) -> Self {
+    pub fn new(usage: wgpu::BufferUsages, contents: Vec<T>) -> Self {
         assert!(
             mem::size_of::<T>() > 0,
             "Element type must not be zero-sized"
         );
 
-        let inner_buffer = Self::create_buffer(handle, usage, &contents);
+        let inner_buffer = Self::create_buffer(usage, &contents);
         Self {
-            handle: handle.clone(),
-
             inner_buffer,
             inner_vec: contents,
         }
+    }
+
+    pub fn vertex(contents: Vec<T>) -> Self {
+        Self::new(wgpu::BufferUsages::VERTEX, contents)
+    }
+
+    pub fn index(contents: Vec<T>) -> Self {
+        Self::new(wgpu::BufferUsages::INDEX, contents)
+    }
+
+    pub fn uniform(contents: Vec<T>) -> Self {
+        Self::new(wgpu::BufferUsages::UNIFORM, contents)
     }
 
     #[inline]
@@ -89,8 +101,7 @@ where
     }
 
     fn recreate_buffer(&mut self) {
-        self.inner_buffer =
-            Self::create_buffer(&self.handle, self.inner_buffer.usage(), &self.inner_vec);
+        self.inner_buffer = Self::create_buffer(self.inner_buffer.usage(), &self.inner_vec);
     }
 
     fn match_vec_capacity(&mut self) {
@@ -114,7 +125,7 @@ where
             return;
         }
 
-        self.handle.queue.write_buffer(
+        global_dep!(GpuHandle).queue.write_buffer(
             &self.inner_buffer,
             (range.start * mem::size_of::<T>()) as wgpu::BufferAddress,
             bytemuck::cast_slice(&self.inner_vec[range]),
@@ -124,7 +135,7 @@ where
     /// Note: This has to create an entirely new buffer, because fuck you
     pub fn change_usage(&mut self, new_usage: wgpu::BufferUsages) {
         if self.inner_buffer.usage() != new_usage {
-            self.inner_buffer = Self::create_buffer(&self.handle, new_usage, &self.inner_vec);
+            self.inner_buffer = Self::create_buffer(new_usage, &self.inner_vec);
         };
     }
 
@@ -224,7 +235,7 @@ where
     T: bytemuck::NoUninit,
 {
     fn clone(&self) -> Self {
-        Self::new(&self.handle, self.usage(), self.inner_vec.clone())
+        Self::new(self.usage(), self.inner_vec.clone())
     }
 }
 

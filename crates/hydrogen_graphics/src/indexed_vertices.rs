@@ -1,5 +1,6 @@
-use crate::{gpu_vec::GpuVec, graphics_controller::GraphicsController, pipeline::PipelineBuffers};
 use hydrogen_data_structures::indexed_container::IndexedContainer;
+
+use crate::{gpu_vec::GpuVec, pipeline::PipelineBuffers};
 
 pub trait IndexedContainerGraphicsExt {
     fn with_capacity_for_vertices<U>(vertices: &IndexedVertices<U>) -> Self
@@ -28,24 +29,30 @@ where
     pub indices: GpuVec<u32>,
 }
 
+impl<T> Default for IndexedVertices<T>
+where
+    T: bytemuck::NoUninit,
+{
+    fn default() -> Self {
+        Self {
+            vertices: GpuVec::vertex(vec![]),
+            indices: GpuVec::index(vec![]),
+        }
+    }
+}
+
 impl<T> IndexedVertices<T>
 where
     T: bytemuck::NoUninit,
 {
-    pub fn new(graphics_controller: &GraphicsController) -> Self {
-        Self {
-            vertices: graphics_controller.vertex_vec(vec![]),
-            indices: graphics_controller.index_vec(vec![]),
-        }
+    pub fn new() -> Self {
+        Self::default()
     }
 
-    pub fn from_contents(
-        graphics_controller: &GraphicsController,
-        contents: IndexedContainer<T>,
-    ) -> Self {
+    pub fn from_contents(contents: IndexedContainer<T>) -> Self {
         Self {
-            vertices: graphics_controller.vertex_vec(contents.items),
-            indices: graphics_controller.index_vec(contents.indices),
+            vertices: GpuVec::vertex(contents.items),
+            indices: GpuVec::index(contents.indices),
         }
     }
 

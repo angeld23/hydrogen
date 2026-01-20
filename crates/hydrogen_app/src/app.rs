@@ -1,10 +1,5 @@
-use crate::input::InputController;
-use hydrogen_core_proc_macro::DependencyProvider;
+use hydrogen_core::{global_dep, global_dependency::set_global_dep};
 use hydrogen_graphics::graphics_controller::GraphicsController;
-use std::{
-    sync::Arc,
-    time::{Duration, Instant},
-};
 use winit::{
     application::ApplicationHandler,
     event::{DeviceEvent, DeviceId, WindowEvent},
@@ -12,8 +7,14 @@ use winit::{
     window::{CursorGrabMode, Window, WindowId},
 };
 
+use std::{
+    sync::Arc, time::{Duration, Instant}
+};
+
+use crate::input::InputController;
+
 mod hydrogen {
-    pub use crate as core;
+    pub use hydrogen_core as core;
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -27,15 +28,15 @@ pub trait AppStateHandler {
 
     const TICKS_PER_SECOND: f32 = 20.0;
 
-    fn new(window: Arc<Window>, controllers: &mut Controllers) -> Self;
+    fn new(window: Arc<Window>) -> Self;
     /// On frames where a tick occurs, this runs *before* [`AppStateHandler::render`].
-    fn tick(&mut self, delta: Duration, controllers: &mut Controllers) {}
+    fn tick(&mut self, delta: Duration) {}
     /// - `delta`: The time since the last render call.
     /// - `tick_progress`: A value within `[0, 1)` representing how far we are between the last tick and
     ///   the next tick. This is *always* `0.0` if and only if a tick just occurred.
-    fn render(&mut self, delta: Duration, tick_progress: f32, controllers: &mut Controllers) {}
-    fn winit_event(&mut self, event: WinitEvent, controllers: &mut Controllers) {}
-    fn window_focus_changed(&mut self, focused: bool, controllers: &mut Controllers) {}
+    fn render(&mut self, delta: Duration, tick_progress: f32) {}
+    fn winit_event(&mut self, event: WinitEvent) {}
+    fn window_focus_changed(&mut self, focused: bool) {}
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -43,20 +44,11 @@ pub struct AppDescriptor {
     pub window_title: String,
 }
 
-#[derive(Debug, DependencyProvider)]
-pub struct Controllers {
-    #[dep_mut]
-    pub graphics_controller: GraphicsController,
-    #[dep_mut]
-    pub input_controller: InputController,
-}
-
 pub struct App<T>
 where
     T: AppStateHandler,
 {
     descriptor: AppDescriptor,
-    controllers: Option<Controllers>,
     window: Option<Arc<Window>>,
     app_state: Option<T>,
     last_frame: Instant,
@@ -71,8 +63,6 @@ where
 {
     pub fn new(descriptor: AppDescriptor) -> Self {
         Self {
-            controllers: None,
-
             window: None,
             app_state: None,
             last_frame: Instant::now(),
@@ -99,12 +89,10 @@ where
         );
         window.set_ime_allowed(true);
 
-        self.controllers = Some(Controllers {
-            graphics_controller: GraphicsController::new(Arc::clone(&window)).unwrap(),
-            input_controller: InputController::new(),
-        });
+        set_global_dep(GraphicsController::new(Arc::clone(&window)).unwrap(), None);
+        set_global_dep(InputController::new(), None);
 
-        let app_state = T::new(Arc::clone(&window), self.controllers.as_mut().unwrap());
+        let app_state = T::new(Arc::clone(&window));
         self.app_state = Some(app_state);
 
         self.window = Some(window);
@@ -125,14 +113,9 @@ where
             return;
         }
 
-        self.controllers
-            .as_mut()
-            .unwrap()
-            .input_controller
-            .winit_event(WinitEvent::Window(&event));
+        global_dep!(mut InputController).winit_event(WinitEvent::Window(&event));
         app_state.winit_event(
-            WinitEvent::Window(&event),
-            self.controllers.as_mut().unwrap(),
+            WinitEvent::Window(&event)
         );
 
         match event {
@@ -150,9 +133,11 @@ where
 
                 // tick handling
                 if !self.next_tick.elapsed().is_zero() {
-                    app_state.tick(self.last_tick.elapsed(), self.controllers.as_mut().unwrap());
+                    app_state.tick(self.last_tick.elapsed());
 
-                    self.controllers.as_mut().unwrap().input_controller.tick();
+                    //controllers().input_controller.write().tick();
+                    
+                    global_dep!(mut InputController).tick();
 
                     self.last_tick = now;
                     self.next_tick += Duration::from_secs_f32(1.0 / T::TICKS_PER_SECOND);
@@ -163,10 +148,10 @@ where
                 
                 let tick_progress = (now - self.last_tick).as_secs_f32() / (self.next_tick - self.last_tick).as_secs_f32();
                 // where the magic happens
-                app_state.render(frame_time, tick_progress, self.controllers.as_mut().unwrap());
+                app_state.render(frame_time, tick_progress);
 
                 // mouse logic
-                let new_mouse_locked = self.controllers.as_mut().unwrap().input_controller.is_mouse_locked();
+                let new_mouse_locked = global_dep!(InputController).is_mouse_locked();
                 if new_mouse_locked != self.mouse_locked {
                     if new_mouse_locked {
                         window.set_cursor_grab(CursorGrabMode::Locked).unwrap_or_else(|_| {
@@ -180,15 +165,15 @@ where
                 }
                 self.mouse_locked = new_mouse_locked;
 
-                self.controllers.as_mut().unwrap().input_controller.clear_inputs();
+                global_dep!(mut InputController).clear_inputs();
 
                 window.request_redraw();
             }
             WindowEvent::Resized(new_size) => {
-                self.controllers.as_mut().unwrap().graphics_controller.resize(new_size);
+                global_dep!(mut GraphicsController).resize(new_size);
             }
             WindowEvent::Focused(is_focused) => {
-                app_state.window_focus_changed(is_focused, self.controllers.as_mut().unwrap());
+                app_state.window_focus_changed(is_focused);
             }
             _ => {
 
@@ -207,14 +192,10 @@ where
             _ => return,
         };
 
-        self.controllers
-            .as_mut()
-            .unwrap()
-            .input_controller
+        global_dep!(mut InputController)
             .winit_event(WinitEvent::Device(&event));
         app_state.winit_event(
-            WinitEvent::Device(&event),
-            self.controllers.as_mut().unwrap(),
+            WinitEvent::Device(&event)
         );
     }
 }

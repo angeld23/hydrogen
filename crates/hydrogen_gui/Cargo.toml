@@ -1,6 +1,6 @@
 [package]
 name = "hydrogen_gui"
-version = "0.1.4"
+version = "0.2.0"
 edition = "2024"
 
 [dependencies]
@@ -39,6 +39,7 @@ hydrogen_core = { path = "../hydrogen_core" }
 hydrogen_data_structures = { path = "../hydrogen_data_structures" }
 hydrogen_math = { path = "../hydrogen_math" }
 hydrogen_graphics = { path = "../hydrogen_graphics" }
+hydrogen_app = { path = "../hydrogen_app" }
 color-eyre = "0.6.3"
 winit = "0.30.4"
 env_logger = "0.11.3"

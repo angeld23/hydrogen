@@ -1,10 +1,6 @@
-use crate::{
-    element::{GuiContext, GuiElement, GuiPrimitive},
-    transform::GuiTransform,
-};
-use cgmath::{vec2, ElementWise, Vector2};
+use cgmath::{ElementWise, Vector2, vec2};
 use codepage_437::CP437_WINGDINGS;
-use hydrogen_core::dependency::Dependency;
+use hydrogen_core::global_dep;
 use hydrogen_graphics::{
     color::RGBA, texture::BASE_TEXTURE_IMAGES, texture_provider::TextureProvider,
 };
@@ -12,6 +8,15 @@ use hydrogen_math::{bbox, bounding_box::BBox2, rect::OrientedSection};
 use image::{DynamicImage, GenericImageView};
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
+
+use crate::{
+    element::{GuiContext, GuiElement, GuiPrimitive},
+    transform::GuiTransform,
+};
+
+mod hydrogen {
+    pub use hydrogen_core as core;
+}
 
 pub const FONT_CHARS_PER_ROW: u32 = 16;
 pub const FONT_PIXELS_PER_CHAR: u32 = 8;
@@ -299,7 +304,7 @@ impl TextRenderData {
         let sections = text
             .sections
             .iter()
-            .filter(|section| section.0 .0 != section.0 .1);
+            .filter(|section| section.0.0 != section.0.1);
         let section_count = sections.clone().count();
 
         for (section_index, ((slice_start, slice_end), styling)) in sections.copied().enumerate() {
@@ -449,19 +454,14 @@ impl TextLabel {
     }
 }
 
-impl<D> GuiElement<D> for TextLabel
-where
-    D: Dependency<TextureProvider>,
-{
+impl GuiElement for TextLabel {
     fn transform(&self) -> GuiTransform {
         self.transform
     }
 
-    fn render(&self, context: &mut GuiContext<D>) -> Vec<GuiPrimitive> {
-        let GuiContext { frame, .. } = context;
-        let frame = *frame;
-
-        let texture_provider = context.dep::<TextureProvider>();
+    fn render(&self, context: &GuiContext) -> Vec<GuiPrimitive> {
+        let frame = context.frame();
+        let texture_provider = global_dep!(TextureProvider);
 
         let char_pixel_height = self.char_pixel_height.max(1.0);
 

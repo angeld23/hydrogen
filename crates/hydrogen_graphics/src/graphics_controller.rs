@@ -9,8 +9,13 @@ use crate::{
     vertex::Vertex2D,
 };
 use anyhow::Result;
+use hydrogen_core::global_dependency::set_global_dep;
 use hydrogen_math::bbox;
-use std::{collections::BTreeMap, rc::Rc, sync::Arc};
+use std::{
+    collections::BTreeMap,
+    rc::Rc,
+    sync::{Arc, Mutex},
+};
 use winit::{dpi::PhysicalSize, window::Window};
 
 #[derive(Debug)]
@@ -26,7 +31,7 @@ pub struct GraphicsController {
     present_vertices: GpuVec<Vertex2D>,
     present_indices: GpuVec<u32>,
 
-    render_targets: BTreeMap<&'static str, Rc<RenderTarget>>,
+    render_targets: Mutex<BTreeMap<&'static str, Rc<RenderTarget>>>,
 }
 
 impl GraphicsController {
@@ -78,14 +83,13 @@ impl GraphicsController {
         window_surface.configure(&device, &window_surface_config);
 
         let handle = GpuHandle { device, queue };
+        set_global_dep(handle.clone(), None);
 
         let present_vertices = GpuVec::new(
-            &handle,
             wgpu::BufferUsages::VERTEX,
             Vertex2D::fill_screen(RGBA::WHITE, bbox!([0.0, 0.0], [1.0, 1.0])).to_vec(),
         );
-        let present_indices =
-            GpuVec::new(&handle, wgpu::BufferUsages::INDEX, vec![0, 1, 2, 2, 3, 0]);
+        let present_indices = GpuVec::new(wgpu::BufferUsages::INDEX, vec![0, 1, 2, 2, 3, 0]);
 
         let mut controller = Self {
             handle,
@@ -99,24 +103,21 @@ impl GraphicsController {
             present_vertices,
             present_indices,
 
-            render_targets: BTreeMap::new(),
+            render_targets: Default::default(),
         };
 
-        controller.present_pipeline = Some(Pipeline::new(
-            &controller,
-            PipelineDescriptor {
-                name: "Present to Screen",
-                shader_source: SHADER_PRESENT,
-                vertex_format: Vertex2D::VERTEX_FORMAT,
-                instance_format: None,
-                target_format: Some(window_surface_format),
-                bind_groups: &[Texture::STANDARD_BIND_GROUP_LAYOUT],
-                use_depth: false,
-                alpha_to_coverage_enabled: false,
+        controller.present_pipeline = Some(Pipeline::new(PipelineDescriptor {
+            name: "Present to Screen",
+            shader_source: SHADER_PRESENT,
+            vertex_format: Vertex2D::VERTEX_FORMAT,
+            instance_format: None,
+            target_format: Some(window_surface_format),
+            bind_groups: &[Texture::STANDARD_BIND_GROUP_LAYOUT],
+            use_depth: false,
+            alpha_to_coverage_enabled: false,
 
-                ..Default::default()
-            },
-        ));
+            ..Default::default()
+        }));
 
         Ok(controller)
     }
@@ -192,79 +193,50 @@ impl GraphicsController {
     ///
     /// (`was_recreated`, `render_target_pointer`)
     pub fn render_target(
-        &mut self,
+        &self,
         name: &'static str,
         width: u32,
         height: u32,
     ) -> (bool, Rc<RenderTarget>) {
-        let recreate = match self.render_targets.get(name) {
+        let recreate = match self.render_targets.try_lock().unwrap().get(name) {
             Some(target) => target.width() != width || target.height() != height,
             None => true,
         };
 
         if recreate {
-            self.render_targets.insert(
+            self.render_targets.try_lock().unwrap().insert(
                 name,
-                Rc::new(RenderTarget::new(
-                    &self.handle,
-                    Texture::new(
-                        &self.handle,
-                        &wgpu::TextureDescriptor {
-                            label: Some(name),
-                            size: wgpu::Extent3d {
-                                width,
-                                height,
-                                depth_or_array_layers: 1,
-                            },
-                            mip_level_count: 1,
-                            sample_count: 1,
-                            dimension: wgpu::TextureDimension::D2,
-                            format: wgpu::TextureFormat::Rgba8UnormSrgb,
-                            usage: wgpu::TextureUsages::COPY_DST
-                                | wgpu::TextureUsages::COPY_SRC
-                                | wgpu::TextureUsages::TEXTURE_BINDING
-                                | wgpu::TextureUsages::RENDER_ATTACHMENT,
-                            view_formats: &[],
+                Rc::new(RenderTarget::new(Texture::new(
+                    &wgpu::TextureDescriptor {
+                        label: Some(name),
+                        size: wgpu::Extent3d {
+                            width,
+                            height,
+                            depth_or_array_layers: 1,
                         },
-                        &wgpu::SamplerDescriptor::default(),
-                    ),
-                )),
+                        mip_level_count: 1,
+                        sample_count: 1,
+                        dimension: wgpu::TextureDimension::D2,
+                        format: wgpu::TextureFormat::Rgba8UnormSrgb,
+                        usage: wgpu::TextureUsages::COPY_DST
+                            | wgpu::TextureUsages::COPY_SRC
+                            | wgpu::TextureUsages::TEXTURE_BINDING
+                            | wgpu::TextureUsages::RENDER_ATTACHMENT,
+                        view_formats: &[],
+                    },
+                    &wgpu::SamplerDescriptor::default(),
+                ))),
             );
         }
 
-        (recreate, Rc::clone(self.render_targets.get(name).unwrap()))
+        (
+            recreate,
+            Rc::clone(self.render_targets.try_lock().unwrap().get(name).unwrap()),
+        )
     }
 
-    pub fn window_sized_render_target(&mut self, name: &'static str) -> (bool, Rc<RenderTarget>) {
+    pub fn window_sized_render_target(&self, name: &'static str) -> (bool, Rc<RenderTarget>) {
         self.render_target(name, self.window_size.width, self.window_size.height)
-    }
-
-    pub fn vec<T>(&self, contents: Vec<T>, usage: wgpu::BufferUsages) -> GpuVec<T>
-    where
-        T: bytemuck::NoUninit,
-    {
-        GpuVec::new(&self.handle, usage, contents)
-    }
-
-    pub fn vertex_vec<T>(&self, contents: Vec<T>) -> GpuVec<T>
-    where
-        T: bytemuck::NoUninit,
-    {
-        self.vec(contents, wgpu::BufferUsages::VERTEX)
-    }
-
-    pub fn index_vec<T>(&self, contents: Vec<T>) -> GpuVec<T>
-    where
-        T: bytemuck::NoUninit,
-    {
-        self.vec(contents, wgpu::BufferUsages::INDEX)
-    }
-
-    pub fn uniform_vec<T>(&self, contents: Vec<T>) -> GpuVec<T>
-    where
-        T: bytemuck::NoUninit,
-    {
-        self.vec(contents, wgpu::BufferUsages::UNIFORM)
     }
 
     pub fn render<V, I>(

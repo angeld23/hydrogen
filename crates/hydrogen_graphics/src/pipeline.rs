@@ -2,11 +2,15 @@ use crate::{
     binding::{BindGroupFormat, BindedBuffer, BindedTexture},
     gpu_handle::GpuHandle,
     gpu_vec::GpuVec,
-    graphics_controller::GraphicsController,
     texture::Texture,
 };
+use hydrogen_core::global_dep;
 use std::marker::PhantomData;
 use wgpu::util::DeviceExt;
+
+mod hydrogen {
+    pub use hydrogen_core as core;
+}
 
 #[derive(Debug, Clone)]
 pub struct PipelineDescriptor {
@@ -118,8 +122,8 @@ where
     V: bytemuck::NoUninit,
     I: bytemuck::NoUninit,
 {
-    pub fn new(controller: &GraphicsController, descriptor: PipelineDescriptor) -> Self {
-        let handle = controller.handle().clone();
+    pub fn new(descriptor: PipelineDescriptor) -> Self {
+        let handle = global_dep!(GpuHandle).clone();
 
         let shader_module = handle
             .device

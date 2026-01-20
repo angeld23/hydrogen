@@ -1,4 +1,3 @@
-use crate::app::WinitEvent;
 use cgmath::{Vector2, vec2};
 use derive_more::*;
 use hydrogen_math::bounding_box::BBox2;
@@ -9,6 +8,8 @@ use winit::{
     keyboard::{Key, NamedKey, SmolStr},
     platform::modifier_supplement::KeyEventExtModifierSupplement,
 };
+
+use crate::app::WinitEvent;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, From, Into)]
 pub struct GuiComponentId(pub u128);

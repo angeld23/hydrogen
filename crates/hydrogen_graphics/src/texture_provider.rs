@@ -1,14 +1,20 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, mem};
 
-use crate::{
-    binding::BindedTexture,
-    gpu_handle::GpuHandle,
-    texture::{self, Texture, BASE_TEXTURE_IMAGES},
-};
+use hydrogen_core::global_dep;
 use hydrogen_math::{
     rect::{OrientedSection, PackedSection},
     rect_packer::{PackResult, RectPacker},
 };
+
+use crate::{
+    binding::BindedTexture,
+    gpu_handle::GpuHandle,
+    texture::{self, BASE_TEXTURE_IMAGES, Texture},
+};
+
+mod hydrogen {
+    pub use hydrogen_core as core;
+}
 
 #[derive(Debug)]
 pub struct TextureProvider {
@@ -16,7 +22,26 @@ pub struct TextureProvider {
     pub texture_sections: BTreeMap<String, PackedSection>,
     pub reserved_textures: BTreeMap<String, wgpu::Texture>,
     pub packer: RectPacker,
-    handle: GpuHandle,
+}
+
+impl Default for TextureProvider {
+    fn default() -> Self {
+        let handle = global_dep!(GpuHandle);
+
+        Self {
+            main_texture: handle.binded_texture(
+                &handle.create_bind_group_layout(Texture::ARRAY_BIND_GROUP_LAYOUT),
+                Texture::new(&Self::texture_descriptor(1), &texture::SAMPLER_PIXELATED),
+            ),
+            texture_sections: Default::default(),
+            reserved_textures: Default::default(),
+            packer: RectPacker::new(
+                Self::TEXTURE_SIDE_LENGTH,
+                Self::TEXTURE_SIDE_LENGTH,
+                Self::PADDING,
+            ),
+        }
+    }
 }
 
 impl TextureProvider {
@@ -40,25 +65,8 @@ impl TextureProvider {
         }
     }
 
-    pub fn new(handle: &GpuHandle) -> Self {
-        Self {
-            main_texture: handle.binded_texture(
-                &handle.create_bind_group_layout(Texture::ARRAY_BIND_GROUP_LAYOUT),
-                Texture::new(
-                    handle,
-                    &Self::texture_descriptor(1),
-                    &texture::SAMPLER_PIXELATED,
-                ),
-            ),
-            texture_sections: Default::default(),
-            reserved_textures: Default::default(),
-            packer: RectPacker::new(
-                Self::TEXTURE_SIDE_LENGTH,
-                Self::TEXTURE_SIDE_LENGTH,
-                Self::PADDING,
-            ),
-            handle: handle.clone(),
-        }
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn bind_group(&self) -> &wgpu::BindGroup {
@@ -90,12 +98,11 @@ impl TextureProvider {
     }
 
     pub fn reset_main_texture(&mut self, layers: u32) {
-        self.main_texture = self.handle.binded_texture(
-            &self
-                .handle
-                .create_bind_group_layout(Texture::ARRAY_BIND_GROUP_LAYOUT),
+        let handle = global_dep!(GpuHandle);
+
+        self.main_texture = handle.binded_texture(
+            &handle.create_bind_group_layout(Texture::ARRAY_BIND_GROUP_LAYOUT),
             Texture::new(
-                &self.handle,
                 &Self::texture_descriptor(layers),
                 &texture::SAMPLER_PIXELATED,
             ),
@@ -109,7 +116,6 @@ impl TextureProvider {
             }
 
             let texture = Texture::from_image(
-                &self.handle,
                 image,
                 &wgpu::TextureDescriptor {
                     usage: wgpu::TextureUsages::COPY_SRC | texture::TEXTURE_IMAGE.usage,
@@ -121,7 +127,7 @@ impl TextureProvider {
             self.reserve_texture(name, &texture.inner_texture);
         }
 
-        let packer = std::mem::replace(
+        let packer = mem::replace(
             &mut self.packer,
             RectPacker::new(
                 Self::TEXTURE_SIDE_LENGTH,
@@ -137,19 +143,18 @@ impl TextureProvider {
         self.reset_main_texture(total_layers);
         self.texture_sections = sections;
 
-        for (name, texture) in std::mem::take(&mut self.reserved_textures) {
+        for (name, texture) in mem::take(&mut self.reserved_textures) {
             self.write_texture(name, &texture);
         }
     }
 
     pub fn write_texture(&self, name: impl Into<String>, texture: &wgpu::Texture) -> bool {
+        let handle = global_dep!(GpuHandle);
+
         let name = name.into();
         if let Some(&section) = self.texture_sections.get(&name) {
             if section.layer_index < self.layer_count() {
-                let mut encoder = self
-                    .handle
-                    .device
-                    .create_command_encoder(&Default::default());
+                let mut encoder = handle.device.create_command_encoder(&Default::default());
 
                 encoder.copy_texture_to_texture(
                     texture.as_image_copy(),
@@ -166,7 +171,7 @@ impl TextureProvider {
                     texture.size(),
                 );
 
-                self.handle.queue.submit(std::iter::once(encoder.finish()));
+                handle.queue.submit(std::iter::once(encoder.finish()));
 
                 true
             } else {
