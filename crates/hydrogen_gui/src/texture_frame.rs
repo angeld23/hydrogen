@@ -17,9 +17,8 @@ impl<D> GuiElement<D> for TextureFrame {
         self.transform
     }
 
-    fn render(&self, context: &mut GuiContext<D>) -> Vec<GuiPrimitive> {
-        let GuiContext { frame, .. } = context;
-        let frame = *frame;
+    fn render(&self, context: &GuiContext<D>) -> Vec<GuiPrimitive> {
+        let frame = context.frame();
 
         vec![GuiPrimitive {
             absolute_position: self.transform.absolute_position(frame),

@@ -1,4 +1,6 @@
-use cgmath::{vec2, ElementWise, Vector2};
+use std::cell::Cell;
+
+use cgmath::{ElementWise, Vector2, vec2};
 use hydrogen_core::dependency::{Dependency, DependencyMut};
 use hydrogen_data_structures::indexed_container::IndexedContainer;
 use hydrogen_graphics::{color::RGBA, texture_provider::TextureProvider, vertex::Vertex2D};
@@ -8,9 +10,9 @@ use crate::{builder::GuiBuilder, text::TextLabel, transform::GuiTransform};
 
 #[derive(Debug)]
 pub struct GuiContext<D> {
-    pub frame: Vector2<f32>,
-    pub global_frame: Vector2<f32>,
-    pub offset: Vector2<f32>,
+    pub frame: Cell<Vector2<f32>>,
+    pub global_frame: Cell<Vector2<f32>>,
+    pub offset: Cell<Vector2<f32>>,
 
     pub dependencies: D,
 }
@@ -18,9 +20,9 @@ pub struct GuiContext<D> {
 impl GuiContext<u8> {
     pub fn new_no_dependencies(frame: Vector2<f32>) -> Self {
         Self {
-            frame,
-            global_frame: frame,
-            offset: vec2(0.0, 0.0),
+            frame: frame.into(),
+            global_frame: frame.into(),
+            offset: vec2(0.0, 0.0).into(),
 
             dependencies: 0,
         }
@@ -30,12 +32,24 @@ impl GuiContext<u8> {
 impl<D> GuiContext<D> {
     pub fn new(frame: Vector2<f32>, dependencies: D) -> Self {
         Self {
-            frame,
-            global_frame: frame,
-            offset: vec2(0.0, 0.0),
+            frame: frame.into(),
+            global_frame: frame.into(),
+            offset: vec2(0.0, 0.0).into(),
 
             dependencies,
         }
+    }
+
+    pub fn frame(&self) -> Vector2<f32> {
+        self.frame.get()
+    }
+
+    pub fn global_frame(&self) -> Vector2<f32> {
+        self.global_frame.get()
+    }
+
+    pub fn offset(&self) -> Vector2<f32> {
+        self.offset.get()
     }
 
     pub fn builder(self) -> GuiBuilder<D> {
@@ -43,11 +57,11 @@ impl<D> GuiContext<D> {
     }
 
     pub fn absolute_position(&self, transform: GuiTransform) -> Vector2<f32> {
-        transform.absolute_position(self.frame) + self.offset
+        transform.absolute_position(self.frame()) + self.offset()
     }
 
     pub fn absolute_size(&self, transform: GuiTransform) -> Vector2<f32> {
-        transform.absolute_size(self.frame)
+        transform.absolute_size(self.frame())
     }
 
     /// (absolute_position, absolute_size)
@@ -86,7 +100,7 @@ impl<D> GuiContext<D> {
 
 pub trait GuiElement<D> {
     fn transform(&self) -> GuiTransform;
-    fn render(&self, context: &mut GuiContext<D>) -> Vec<GuiPrimitive>;
+    fn render(&self, context: &GuiContext<D>) -> Vec<GuiPrimitive>;
 }
 
 #[derive(Debug, Clone, Copy)]

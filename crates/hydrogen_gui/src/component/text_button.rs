@@ -14,7 +14,7 @@ use crate::{
 
 use super::{
     button::Button,
-    menu::{get_list_margin, get_outline_thickness, COLOR_BUTTON_DEFAULT},
+    menu::{COLOR_BUTTON_DEFAULT, get_list_margin, get_outline_thickness},
 };
 
 #[derive(Debug)]
@@ -35,15 +35,16 @@ impl Default for TextButton {
 }
 
 impl TextButton {
-    pub fn render<D>(&mut self, builder: &GuiBuilder<D>, text_label: TextLabel)
+    pub fn render<D>(&mut self, builder: &mut GuiBuilder<D>, text_label: TextLabel)
     where
         D: Dependency<TextureProvider> + DependencyMut<InputController>,
     {
-        let context = builder.context();
+        self.button
+            .update(&mut builder.context, text_label.transform);
 
-        self.button.update(context, text_label.transform);
+        let context = &builder.context;
 
-        let outline_thickness = get_outline_thickness(context.global_frame.y);
+        let outline_thickness = get_outline_thickness(context.global_frame().y);
 
         let (absolute_position, absolute_size) = context.absolute(text_label.transform);
 
@@ -71,7 +72,7 @@ impl TextButton {
 }
 
 pub fn button_list<D>(
-    builder: &GuiBuilder<D>,
+    builder: &mut GuiBuilder<D>,
     container: GuiTransform,
     button_rows: &mut [&mut [&mut TextButton]],
     render_buttons: bool,
@@ -82,10 +83,10 @@ pub fn button_list<D>(
         return;
     }
 
-    let context = builder.context();
+    let context = &mut builder.context;
 
     let row_count = button_rows.len();
-    let pixel_margin = get_list_margin(context.global_frame.y);
+    let pixel_margin = get_list_margin(context.global_frame().y);
 
     let (absolute_position, absolute_size) = context.absolute(container);
     // the whole frame *minus* the total margin, divided by the amount of rows

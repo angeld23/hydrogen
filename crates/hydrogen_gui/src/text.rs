@@ -2,7 +2,7 @@ use crate::{
     element::{GuiContext, GuiElement, GuiPrimitive},
     transform::GuiTransform,
 };
-use cgmath::{vec2, ElementWise, Vector2};
+use cgmath::{ElementWise, Vector2, vec2};
 use codepage_437::CP437_WINGDINGS;
 use hydrogen_core::dependency::Dependency;
 use hydrogen_graphics::{
@@ -299,7 +299,7 @@ impl TextRenderData {
         let sections = text
             .sections
             .iter()
-            .filter(|section| section.0 .0 != section.0 .1);
+            .filter(|section| section.0.0 != section.0.1);
         let section_count = sections.clone().count();
 
         for (section_index, ((slice_start, slice_end), styling)) in sections.copied().enumerate() {
@@ -457,9 +457,8 @@ where
         self.transform
     }
 
-    fn render(&self, context: &mut GuiContext<D>) -> Vec<GuiPrimitive> {
-        let GuiContext { frame, .. } = context;
-        let frame = *frame;
+    fn render(&self, context: &GuiContext<D>) -> Vec<GuiPrimitive> {
+        let frame = context.frame();
 
         let texture_provider = context.dep::<TextureProvider>();
 
