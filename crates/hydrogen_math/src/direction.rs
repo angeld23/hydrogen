@@ -1,5 +1,5 @@
 use crate::{axis::Axis, sign::Sign};
-use cgmath::{num_traits::Signed, vec3, Vector3};
+use cgmath::{Vector3, num_traits::Signed, vec3};
 use serde::{Deserialize, Serialize};
 
 /// One of six perpendicular directions.
@@ -102,12 +102,6 @@ impl Direction {
         for axis in Axis::ALL {
             let value = axis.get_component(vector);
             if value.abs() > biggest.1.abs() {
-                // I have absolutely no idea why, but if this if statement isn't here, what I assume to be some erroneous
-                // compiler optimization causes this function to break. For example, inputting vec3(-1.0, 0.0, 0.0) yields
-                // a direction of positive Y. Genuinely what the fuck.
-                if value.is_zero() {
-                    println!(".");
-                }
                 biggest = (axis, value);
             }
         }
