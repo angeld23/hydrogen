@@ -96,7 +96,7 @@ impl Direction {
     /// Returns the closest [Direction] to a given [Vector3]'s direction.
     pub fn from_vector<T>(vector: Vector3<T>) -> Self
     where
-        T: std::fmt::Debug + Signed + PartialOrd + Copy,
+        T: Signed + PartialOrd + Copy,
     {
         let mut biggest = (Axis::default(), T::zero());
         for axis in Axis::ALL {
