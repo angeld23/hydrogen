@@ -1,4 +1,4 @@
-use cgmath::{vec3, Deg, Matrix4, Quaternion, SquareMatrix, Vector3};
+use cgmath::{Deg, Matrix4, Quaternion, SquareMatrix, Vector3, vec3};
 
 #[rustfmt::skip]
 /// Since cgmath uses OpenGL's NDC space which has a range of [-1.0, +1.0] for the z-axis, but wgpu uses [0.0, +1.0],
@@ -15,7 +15,7 @@ pub const OPENGL_TO_WGPU_MATRIX: Matrix4<f32> = Matrix4::new(
 #[derive(Debug, Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct CameraUniform {
     pub view_projection: [[f32; 4]; 4],
-    pub _padding: [u32; 3], // this is the worst thing on the planet
+    pub position: [f32; 3],
     pub aspect_ratio: f32,
 }
 
@@ -60,7 +60,7 @@ impl Camera {
     pub fn uniform(&self, aspect_ratio: f32) -> CameraUniform {
         CameraUniform {
             view_projection: self.build_view_projection_matrix(aspect_ratio).into(),
-            _padding: [0; 3],
+            position: self.position.into(),
             aspect_ratio,
         }
     }

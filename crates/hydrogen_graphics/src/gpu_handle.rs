@@ -1,5 +1,5 @@
 use crate::{
-    binding::{bind_group_format_to_layout_entries, BindGroupFormat, BindedBuffer, BindedTexture},
+    binding::{BindGroupFormat, BindedBuffer, BindedTexture, bind_group_format_to_layout_entries},
     gpu_vec::GpuVec,
     texture::Texture,
 };
@@ -27,7 +27,7 @@ impl GpuHandle {
     pub fn create_bind_group(
         &self,
         layout: &wgpu::BindGroupLayout,
-        resources: Vec<wgpu::BindingResource>,
+        resources: impl IntoIterator<Item = wgpu::BindingResource>,
     ) -> wgpu::BindGroup {
         let entries: Vec<wgpu::BindGroupEntry<'_>> = resources
             .into_iter()
@@ -50,13 +50,7 @@ impl GpuHandle {
         layout: &wgpu::BindGroupLayout,
         texture: Texture,
     ) -> BindedTexture {
-        let bind_group = self.create_bind_group(
-            layout,
-            vec![
-                wgpu::BindingResource::TextureView(&texture.view),
-                wgpu::BindingResource::Sampler(&texture.sampler),
-            ],
-        );
+        let bind_group = self.create_bind_group(layout, texture.binding_resources());
         BindedTexture {
             texture,
             bind_group,
@@ -71,7 +65,7 @@ impl GpuHandle {
     where
         T: bytemuck::NoUninit,
     {
-        let bind_group = self.create_bind_group(layout, vec![buffer.buffer().as_entire_binding()]);
+        let bind_group = self.create_bind_group(layout, [buffer.buffer().as_entire_binding()]);
         BindedBuffer { buffer, bind_group }
     }
 

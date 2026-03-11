@@ -23,7 +23,7 @@ pub enum WinitEvent<'a> {
 }
 
 pub trait AppStateHandler {
-    #![allow(unused_variables)]
+    #![expect(unused_variables)]
 
     const TICKS_PER_SECOND: f32 = 20.0;
 

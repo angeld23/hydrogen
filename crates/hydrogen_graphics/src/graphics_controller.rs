@@ -1,3 +1,9 @@
+use std::{collections::BTreeMap, rc::Rc, sync::Arc};
+
+use anyhow::Result;
+use hydrogen_math::bbox;
+use winit::{dpi::PhysicalSize, window::Window};
+
 use crate::{
     color::RGBA,
     gpu_handle::GpuHandle,
@@ -8,10 +14,6 @@ use crate::{
     texture::Texture,
     vertex::Vertex2D,
 };
-use anyhow::Result;
-use hydrogen_math::bbox;
-use std::{collections::BTreeMap, rc::Rc, sync::Arc};
-use winit::{dpi::PhysicalSize, window::Window};
 
 #[derive(Debug)]
 pub struct GraphicsController {
@@ -353,6 +355,7 @@ impl GraphicsController {
                 },
                 timestamp_writes: None,
                 occlusion_query_set: None,
+                multiview_mask: None,
             });
 
             for (i, bind_group) in bind_groups.into_iter().enumerate() {

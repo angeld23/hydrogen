@@ -1,3 +1,7 @@
+use std::marker::PhantomData;
+
+use wgpu::util::DeviceExt;
+
 use crate::{
     binding::{BindGroupFormat, BindedBuffer, BindedTexture},
     gpu_handle::GpuHandle,
@@ -5,8 +9,6 @@ use crate::{
     graphics_controller::GraphicsController,
     texture::Texture,
 };
-use std::marker::PhantomData;
-use wgpu::util::DeviceExt;
 
 #[derive(Debug, Clone)]
 pub struct PipelineDescriptor {
@@ -155,7 +157,7 @@ where
                             bind_group_layouts: &bind_group_layouts
                                 .iter()
                                 .collect::<Vec<&wgpu::BindGroupLayout>>(),
-                            push_constant_ranges: &[],
+                            immediate_size: 0,
                         }),
                 ),
                 vertex: wgpu::VertexState {
@@ -208,7 +210,7 @@ where
                         write_mask: wgpu::ColorWrites::ALL,
                     })],
                 }),
-                multiview: None,
+                multiview_mask: None,
                 cache: None,
             });
 
@@ -247,7 +249,7 @@ where
     pub fn create_bind_group(
         &self,
         group_layout_index: usize,
-        resources: Vec<wgpu::BindingResource>,
+        resources: impl IntoIterator<Item = wgpu::BindingResource>,
     ) -> wgpu::BindGroup {
         self.handle
             .create_bind_group(&self.bind_group_layouts[group_layout_index], resources)

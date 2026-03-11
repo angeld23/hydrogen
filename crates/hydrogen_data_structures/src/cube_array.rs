@@ -1,21 +1,19 @@
-use cgmath::{vec3, Vector3};
+use cgmath::{Vector3, vec3};
 use hydrogen_math::direction::Direction;
 
 pub fn vec_to_sized_box<T, const S: usize>(vec: Vec<T>) -> Option<Box<[T; S]>> {
     if vec.len() == S {
         Some(
             // evil typecast to include the size in the boxed slice type
-            //
+
             // a previous version of this was causing some hair-pulling random stack overflows due to
             // heap corruption. heed my warnings and either avoid unsafe bullshit at all costs, or
             // always remember that if you ever get weird, inconsistent low-level errors, blame
             // an unsafe block first and foremost, then blame multithreading, THEN blame yourself.
-            //
+
             // SAFETY:
             // the vec's length is ensured to be exactly equal to S
-            unsafe {
-                Box::from_raw(std::boxed::Box::into_raw(vec.into_boxed_slice()) as *mut [T; S])
-            },
+            unsafe { Box::from_raw(Box::into_raw(vec.into_boxed_slice()) as *mut [T; S]) },
         )
     } else {
         None

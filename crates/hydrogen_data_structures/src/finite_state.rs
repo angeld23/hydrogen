@@ -6,10 +6,11 @@
 //! TODO: This whole system is kinda janky, especially with serialization of StringEnum. I should probably rework it.
 //! TODO: nuh uh
 
+use std::collections::BTreeMap;
+
 use derive_more::*;
 use linear_map::set::LinearSet;
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
 use thiserror::Error;
 
 type FStateMap<T> = BTreeMap<&'static str, T>;

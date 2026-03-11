@@ -1,6 +1,7 @@
-use crate::{axis::Axis, direction::Direction, sign::Sign};
-use cgmath::{num_traits::Signed, BaseFloat, Matrix3, Rotation3};
+use cgmath::{BaseFloat, Matrix3, Rotation3, num_traits::Signed};
 use serde::{Deserialize, Serialize};
+
+use crate::{axis::Axis, direction::Direction, sign::Sign};
 
 /// Maps each of the six [Direction]s to a value. All [Direction]s must be mapped to a value.
 #[derive(Debug, Default, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]

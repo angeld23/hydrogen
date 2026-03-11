@@ -1,6 +1,7 @@
-use crate::float_ext::AddWithEpsilon;
 use serde::{Deserialize, Serialize};
 use serde_big_array::BigArray;
+
+use crate::float_ext::AddWithEpsilon;
 
 pub type Point<const D: usize> = [f32; D];
 

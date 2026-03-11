@@ -1,7 +1,7 @@
 use std::{io::Write, marker::PhantomData};
 
-use flate2::{write::ZlibEncoder, Compression};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use flate2::{Compression, write::ZlibEncoder};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use zune_inflate::DeflateDecoder;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

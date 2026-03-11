@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use crate::{
     binding::BindedTexture,
     gpu_handle::GpuHandle,
-    texture::{self, Texture, BASE_TEXTURE_IMAGES},
+    texture::{self, BASE_TEXTURE_IMAGES, Texture},
 };
 use hydrogen_math::{
     rect::{OrientedSection, PackedSection},

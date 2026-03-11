@@ -1,7 +1,9 @@
-use crate::bounding_box::{bbox, BBox2};
+use std::mem;
+
 use cgmath::{ElementWise, Vector2};
 use derive_more::*;
-use std::mem;
+
+use crate::bounding_box::{BBox2, bbox};
 
 pub fn rect_fits(container: Vector2<u32>, inner: Vector2<u32>) -> bool {
     container.x >= inner.x && container.y >= inner.y

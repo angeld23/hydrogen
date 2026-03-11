@@ -1,9 +1,10 @@
 use std::collections::BTreeMap;
 
-use crate::gpu_handle::GpuHandle;
 use image::{DynamicImage, GenericImageView};
 use include_dir::include_dir;
 use lazy_static::lazy_static;
+
+use crate::gpu_handle::GpuHandle;
 
 #[derive(Debug)]
 pub struct Texture {
@@ -19,7 +20,7 @@ lazy_static! {
         address_mode_w: wgpu::AddressMode::ClampToEdge,
         mag_filter: wgpu::FilterMode::Nearest,
         min_filter: wgpu::FilterMode::Nearest,
-        mipmap_filter: wgpu::FilterMode::Nearest,
+        mipmap_filter: wgpu::MipmapFilterMode::Nearest,
         ..Default::default()
     };
     pub static ref SAMPLER_LINEAR: wgpu::SamplerDescriptor<'static> = wgpu::SamplerDescriptor {
@@ -28,7 +29,7 @@ lazy_static! {
         address_mode_w: wgpu::AddressMode::ClampToEdge,
         mag_filter: wgpu::FilterMode::Linear,
         min_filter: wgpu::FilterMode::Linear,
-        mipmap_filter: wgpu::FilterMode::Nearest,
+        mipmap_filter: wgpu::MipmapFilterMode::Nearest,
         ..Default::default()
     };
     pub static ref SAMPLER_DEPTH: wgpu::SamplerDescriptor<'static> = wgpu::SamplerDescriptor {
@@ -37,7 +38,7 @@ lazy_static! {
         address_mode_w: wgpu::AddressMode::ClampToEdge,
         mag_filter: wgpu::FilterMode::Linear,
         min_filter: wgpu::FilterMode::Linear,
-        mipmap_filter: wgpu::FilterMode::Nearest,
+        mipmap_filter: wgpu::MipmapFilterMode::Nearest,
         compare: Some(wgpu::CompareFunction::LessEqual),
         lod_min_clamp: 0.0,
         lod_max_clamp: 100.0,
@@ -177,6 +178,16 @@ impl Texture {
         )
     }
 
+    pub fn clone_into(&self, handle: &GpuHandle, rhs: &Texture) {
+        let mut encoder = handle.device.create_command_encoder(&Default::default());
+        encoder.copy_texture_to_texture(
+            self.inner_texture.as_image_copy(),
+            rhs.inner_texture.as_image_copy(),
+            self.inner_texture.size(),
+        );
+        handle.queue.submit(std::iter::once(encoder.finish()));
+    }
+
     pub fn clone(&self, handle: &GpuHandle, sampler_descriptor: &wgpu::SamplerDescriptor) -> Self {
         let texture = handle.device.create_texture(&wgpu::TextureDescriptor {
             label: None,
@@ -205,6 +216,13 @@ impl Texture {
             view,
             sampler,
         }
+    }
+
+    pub fn binding_resources(&self) -> [wgpu::BindingResource<'_>; 2] {
+        [
+            wgpu::BindingResource::TextureView(&self.view),
+            wgpu::BindingResource::Sampler(&self.sampler),
+        ]
     }
 }
 

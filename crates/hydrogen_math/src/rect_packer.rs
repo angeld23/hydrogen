@@ -1,10 +1,11 @@
 use std::collections::BTreeMap;
 
+use cgmath::{Array, Vector2, vec2};
+
 use crate::{
     bounding_box::bbox,
-    rect::{rect_fits, PackedSection},
+    rect::{PackedSection, rect_fits},
 };
-use cgmath::{vec2, Array, Vector2};
 
 #[derive(Debug, Clone)]
 pub struct RectPacker {
@@ -44,7 +45,7 @@ impl RectPacker {
 
     pub fn pack(self) -> PackResult {
         let mut slots: Vec<(String, Vector2<u32>)> = self.slots.into_iter().collect();
-        slots.sort_by(|(_, size_0), (_, size_1)| size_1.product().cmp(&size_0.product()));
+        slots.sort_by_key(|(_, size_1)| std::cmp::Reverse(size_1.product()));
 
         let mut sections = BTreeMap::<String, PackedSection>::new();
 

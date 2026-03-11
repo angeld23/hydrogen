@@ -1,6 +1,7 @@
-use crate::{axis::Axis, sign::Sign};
 use cgmath::{Vector3, num_traits::Signed, vec3};
 use serde::{Deserialize, Serialize};
+
+use crate::{axis::Axis, sign::Sign};
 
 /// One of six perpendicular directions.
 #[derive(Default, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]

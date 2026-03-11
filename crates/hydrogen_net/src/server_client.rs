@@ -1,7 +1,3 @@
-use derive_more::*;
-use hydrogen_core::events::EventSender;
-use log::debug;
-use serde::{Deserialize, Serialize};
 use std::{
     collections::BTreeMap,
     io,
@@ -9,6 +5,11 @@ use std::{
     rc::Rc,
     sync::{Mutex, MutexGuard},
 };
+
+use derive_more::*;
+use hydrogen_core::events::EventSender;
+use log::debug;
+use serde::{Deserialize, Serialize};
 
 use crate::comm::{TcpCommunicator, TcpCommunicatorError};
 

@@ -1,7 +1,8 @@
+use std::{mem, ops::Range};
+
 use wgpu::util::DeviceExt;
 
 use crate::gpu_handle::GpuHandle;
-use std::{mem, ops::Range};
 
 #[derive(Debug)]
 pub struct GpuVec<T>
@@ -166,11 +167,11 @@ where
 
     pub fn set(&mut self, index: usize, value: T) {
         self.inner_vec[index] = value;
-        self.apply_inner_change(index..self.inner_vec.len());
+        self.apply_inner_change(index..(index + 1));
     }
 
     pub fn overwrite_from_start_index(&mut self, start_index: usize, new_contents: &[T]) {
-        // note: an index of exactly inner_vex.len() is allowed because
+        // note: an index of exactly inner_vec.len() is allowed because
         // we're only doing this check to avoid having to fill in gaps
         if start_index > self.inner_vec.len() {
             panic!(
@@ -234,5 +235,53 @@ where
 {
     fn eq(&self, other: &Self) -> bool {
         self.inner_vec == other.inner_vec
+    }
+}
+
+impl<T, I: std::slice::SliceIndex<[T]>> std::ops::Index<I> for GpuVec<T>
+where
+    T: bytemuck::NoUninit,
+{
+    type Output = I::Output;
+
+    fn index(&self, index: I) -> &Self::Output {
+        &self.inner_vec[index]
+    }
+}
+
+//
+// (can't implement IndexMut, because that would allow changing the vec without updating the buffer)
+//
+
+impl<T> IntoIterator for GpuVec<T>
+where
+    T: bytemuck::NoUninit,
+{
+    type Item = T;
+    type IntoIter = std::vec::IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.inner_vec.into_iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a GpuVec<T>
+where
+    T: bytemuck::NoUninit,
+{
+    type Item = &'a T;
+    type IntoIter = std::slice::Iter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.inner_vec.iter()
+    }
+}
+
+impl<T> std::borrow::Borrow<[T]> for GpuVec<T>
+where
+    T: bytemuck::NoUninit,
+{
+    fn borrow(&self) -> &[T] {
+        self.inner_vec.as_slice()
     }
 }

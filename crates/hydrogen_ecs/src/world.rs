@@ -5,14 +5,10 @@ use hydrogen_net::server_client::ClientId;
 
 use crate::{
     change_tracker::{ComponentTrackerEvent, GlobalComponentTracker},
-    component::{Component, ComponentId, ComponentSet, SerializableComponent},
+    component::{Component, ComponentId, ComponentSet, SerializableComponent, has_unique_elements},
     ecs_net::{NetEcsCommand, Replicate, ServerEntityId},
     entity::EntityId,
 };
-
-mod hydrogen {
-    pub use crate as ecs;
-}
 
 #[derive(Debug, Default)]
 pub struct World {
@@ -254,6 +250,11 @@ impl World {
         with: [ComponentId; WITH],
         without: [ComponentId; WITHOUT],
     ) -> Option<[&mut Box<dyn Component>; WITH]> {
+        assert!(
+            has_unique_elements(&with),
+            "The `with` array must have unique component IDs"
+        );
+
         if with.is_empty() && !self.has_entity(entity_id) {
             return None;
         }
@@ -266,7 +267,7 @@ impl World {
 
         let mut component_slots: [Option<&mut Box<dyn Component>>; WITH] = array::from_fn(|_| None);
         for (index, slot) in component_slots.iter_mut().enumerate() {
-            // ew
+            // SAFETY: `with` is asserted to contain no dupliate component IDs, so no aliasing can occur.
             unsafe {
                 *slot = Some(
                     ((self.get_component(entity_id, with[index])?) as *const Box<dyn Component>
@@ -299,6 +300,11 @@ impl World {
         with: [ComponentId; WITH],
         without: [ComponentId; WITHOUT],
     ) -> impl Iterator<Item = (EntityId, [&mut Box<dyn Component>; WITH])> {
+        assert!(
+            has_unique_elements(&with),
+            "The `with` array must have unique component IDs"
+        );
+
         let upper_bound = self.required_iter_upper_bound(&with);
 
         (0..upper_bound).filter_map(move |i| {
@@ -317,8 +323,7 @@ impl World {
             let mut component_slots: [Option<&mut Box<dyn Component>>; WITH] =
                 array::from_fn(|_| None);
             for (index, slot) in component_slots.iter_mut().enumerate() {
-                // ew
-                // is there an easier way to force an immutable reference to be mutable?
+                // SAFETY: `with` is asserted to contain no dupliate component IDs, so no aliasing can occur.
                 unsafe {
                     *slot = Some(
                         ((self.get_component(entity_id, with[index])?) as *const Box<dyn Component>
@@ -377,11 +382,13 @@ impl World {
             .get_event_sender(entity_id, component_id)
     }
 
-    pub fn get_entity_from_component(&self, component: &impl Component) -> Option<EntityId> {
-        self.components
-            .get(&component.component_id())?
-            .get_entity_from_component(component)
-    }
+    // This is apparently not reliable due to the nature of vtable (de)duplication
+
+    // pub fn get_entity_from_component(&self, component: &impl Component) -> Option<EntityId> {
+    //     self.components
+    //         .get(&component.component_id())?
+    //         .get_entity_from_component(component)
+    // }
 }
 
 #[macro_export]
@@ -389,12 +396,12 @@ macro_rules! query {
     ($world:expr, ($($with:ty),*), ($($without:ty),*)) => {
         ::paste::paste! {
             $world.query([$(<$with>::COMPONENT_ID),*], [$(<$without>::COMPONENT_ID),*]).map(|(entity_id, [$([<$with:snake>]),*])| {
-                unsafe { (entity_id, ($(([<$with:snake>] as *const ::std::boxed::Box<dyn hydrogen::ecs::component::Component> as *const ::std::boxed::Box<$with>).as_ref().unwrap().as_ref(),)*)) }
+                unsafe { (entity_id, ($(([<$with:snake>] as *const ::std::boxed::Box<dyn $crate::component::Component> as *const ::std::boxed::Box<$with>).as_ref().unwrap().as_ref(),)*)) }
             })
         }
     };
     ($world:expr, $($with:ty),*) => {
-        hydrogen::ecs::world::query!($world, ($($with),*), ())
+        $crate::world::query!($world, ($($with),*), ())
     };
 }
 
@@ -403,12 +410,12 @@ macro_rules! query_mut {
     ($world:expr, ($($with:ty),*), ($($without:ty),*)) => {
         ::paste::paste! {
             $world.query_mut([$(<$with>::COMPONENT_ID),*], [$(<$without>::COMPONENT_ID),*]).map(|(entity_id, [$([<$with:snake>]),*])| {
-                unsafe { (entity_id, ($(([<$with:snake>] as *const ::std::boxed::Box<dyn hydrogen::ecs::component::Component> as *mut ::std::boxed::Box<$with>).as_mut().unwrap().as_mut(),)*)) }
+                unsafe { (entity_id, ($(([<$with:snake>] as *mut ::std::boxed::Box<dyn $crate::component::Component> as *mut ::std::boxed::Box<$with>).as_mut().unwrap().as_mut(),)*)) }
             })
         }
     };
     ($world:expr, $($with:ty),*) => {
-        hydrogen::ecs::world::query_mut!($world, ($($with),*), ())
+        $crate::world::query_mut!($world, ($($with),*), ())
     };
 }
 
@@ -417,12 +424,12 @@ macro_rules! query_one {
     ($world:expr, $entity_id:expr, ($($with:ty),*), ($($without:ty),*)) => {
         ::paste::paste! {
             $world.query_one($entity_id, [$(<$with>::COMPONENT_ID),*], [$(<$without>::COMPONENT_ID),*]).map(|[$([<$with:snake>]),*]| {
-                unsafe { ($(([<$with:snake>] as *const ::std::boxed::Box<dyn hydrogen::ecs::component::Component> as *const ::std::boxed::Box<$with>).as_ref().unwrap().as_ref(),)*) }
+                unsafe { ($(([<$with:snake>] as *const ::std::boxed::Box<dyn $crate::component::Component> as *const ::std::boxed::Box<$with>).as_ref().unwrap().as_ref(),)*) }
             })
         }
     };
     ($world:expr, $entity_id:expr, $($with:ty),*) => {
-        hydrogen::ecs::world::query_one!($world, $entity_id, ($($with),*), ())
+        $crate::world::query_one!($world, $entity_id, ($($with),*), ())
     };
 }
 
@@ -431,12 +438,12 @@ macro_rules! query_one_mut {
     ($world:expr, $entity_id:expr, ($($with:ty),*), ($($without:ty),*)) => {
         ::paste::paste! {
             $world.query_one_mut($entity_id, [$(<$with>::COMPONENT_ID),*], [$(<$without>::COMPONENT_ID),*]).map(|[$([<$with:snake>]),*]| {
-                unsafe { ($(([<$with:snake>] as *const ::std::boxed::Box<dyn hydrogen::ecs::component::Component> as *mut ::std::boxed::Box<$with>).as_mut().unwrap().as_mut(),)*) }
+                unsafe { ($(([<$with:snake>] as *mut ::std::boxed::Box<dyn $crate::component::Component> as *mut ::std::boxed::Box<$with>).as_mut().unwrap().as_mut(),)*) }
             })
         }
     };
     ($world:expr, $entity_id:expr, $($with:ty),*) => {
-        hydrogen::ecs::world::query_one_mut!($world, $entity_id, ($($with),*), ())
+        $crate::world::query_one_mut!($world, $entity_id, ($($with),*), ())
     };
 }
 

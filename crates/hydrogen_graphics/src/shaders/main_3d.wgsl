@@ -15,7 +15,7 @@ struct VertexInput {
 
 struct CameraUniform {
     view_projection: mat4x4<f32>,
-    _padding: vec3<u32>, // this is fucking dumb
+    position: vec3<f32>,
     aspect_ratio: f32,
 }
 @group(1) @binding(0)

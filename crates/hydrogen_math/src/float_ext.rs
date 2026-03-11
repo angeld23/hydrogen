@@ -1,4 +1,4 @@
-use cgmath::{ulps_eq, InnerSpace, Vector2, Vector3, Vector4, Zero};
+use cgmath::{InnerSpace, Vector2, Vector3, Vector4, Zero, ulps_eq};
 
 pub trait IsSmall {
     fn is_small(&self) -> bool;

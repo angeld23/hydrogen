@@ -1,4 +1,4 @@
-use cgmath::{vec2, vec3, Vector2, Vector3};
+use cgmath::{Vector2, Vector3, vec2, vec3};
 use derive_more::*;
 use serde::{Deserialize, Serialize};
 

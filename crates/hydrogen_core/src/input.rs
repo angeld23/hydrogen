@@ -1,4 +1,3 @@
-use crate::app::WinitEvent;
 use cgmath::{Vector2, vec2};
 use derive_more::*;
 use hydrogen_math::bounding_box::BBox2;
@@ -9,6 +8,8 @@ use winit::{
     keyboard::{Key, NamedKey, SmolStr},
     platform::modifier_supplement::KeyEventExtModifierSupplement,
 };
+
+use crate::app::WinitEvent;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, From, Into)]
 pub struct GuiComponentId(pub u128);
@@ -392,10 +393,8 @@ impl InputController {
                 WindowEvent::CursorMoved { position, .. } => {
                     self.cursor_position = vec2(position.x as f32, position.y as f32);
                 }
-                WindowEvent::Ime(Ime::Commit(text)) => {
-                    if self.cursor_in_window {
-                        self.just_typed.push_str(text);
-                    }
+                WindowEvent::Ime(Ime::Commit(text)) if self.cursor_in_window => {
+                    self.just_typed.push_str(text);
                 }
                 _ => {}
             },

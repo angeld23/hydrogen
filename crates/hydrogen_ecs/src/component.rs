@@ -1,16 +1,29 @@
-use crate::entity::EntityId;
-use derive_more::*;
-use dyn_clone::DynClone;
-use hydrogen_core::dyn_util::DynPartialEq;
-use serde::{Deserialize, Serialize};
 use std::{
     any::Any,
     array,
     collections::{BTreeMap, VecDeque},
-    fmt, mem, ptr,
+    fmt, mem,
 };
 
+use derive_more::*;
+use dyn_clone::DynClone;
+use hydrogen_core::dyn_util::DynPartialEq;
 pub use hydrogen_ecs_proc_macro::{Component, SerializableComponent};
+use serde::{Deserialize, Serialize};
+
+use crate::entity::EntityId;
+
+pub(crate) fn has_unique_elements<T: PartialEq>(arr: &[T]) -> bool {
+    for (i, v) in arr.iter().enumerate() {
+        for v2 in arr[..i].iter() {
+            if v2 == v {
+                return false;
+            }
+        }
+    }
+
+    true
+}
 
 #[derive(
     Debug,
@@ -84,28 +97,30 @@ impl ComponentSet {
         matches!(self.entity_component_indices.get(index), Some(Some(_)))
     }
 
-    pub fn has_component_instance(&self, component: &impl Component) -> bool {
-        self.components.iter().any(|c| {
-            if let Some(other_component) = c {
-                // check to see if the pointers match
-                ptr::eq(other_component.as_ref(), component as *const dyn Component)
-            } else {
-                false
-            }
-        })
-    }
+    // These are apparently not reliable due to the nature of vtable (de)duplication
 
-    pub fn get_entity_from_component(&self, component: &impl Component) -> Option<EntityId> {
-        self.entity_component_indices.iter().enumerate().find_map(
-            |(entity_id, &component_index)| {
-                ptr::eq(
-                    self.components.get(component_index?)?.as_ref()?.as_ref(),
-                    component as *const dyn Component,
-                )
-                .then_some(entity_id.into())
-            },
-        )
-    }
+    // pub fn has_component_instance(&self, component: &impl Component) -> bool {
+    //     self.components.iter().any(|c| {
+    //         if let Some(other_component) = c {
+    //             // check to see if the pointers match
+    //             ptr::eq(other_component.as_ref(), component as *const dyn Component)
+    //         } else {
+    //             false
+    //         }
+    //     })
+    // }
+
+    // pub fn get_entity_from_component(&self, component: &impl Component) -> Option<EntityId> {
+    //     self.entity_component_indices.iter().enumerate().find_map(
+    //         |(entity_id, &component_index)| {
+    //             ptr::eq(
+    //                 self.components.get(component_index?)?.as_ref()?.as_ref(),
+    //                 component as *const dyn Component,
+    //             )
+    //             .then_some(entity_id.into())
+    //         },
+    //     )
+    // }
 
     pub fn entity_component_indices(&self) -> &Vec<Option<usize>> {
         &self.entity_component_indices
@@ -276,6 +291,11 @@ impl ComponentBundle {
             return None;
         }
 
+        assert!(
+            has_unique_elements(&with),
+            "The `with` array must have unique component IDs"
+        );
+
         for &excluded_component_id in without.iter() {
             if self.has_component(excluded_component_id) {
                 return None;
@@ -284,7 +304,7 @@ impl ComponentBundle {
 
         let mut component_slots: [Option<&mut Box<dyn Component>>; WITH] = array::from_fn(|_| None);
         for (index, slot) in component_slots.iter_mut().enumerate() {
-            // ew
+            // SAFETY: `with` is asserted to contain no dupliate component IDs, so no aliasing can occur.
             unsafe {
                 *slot = Some(
                     ((self.get_component(with[index])?) as *const Box<dyn Component>
@@ -396,6 +416,11 @@ impl SerializableComponentBundle {
             return None;
         }
 
+        assert!(
+            has_unique_elements(&with),
+            "The `with` array must have unique component IDs"
+        );
+
         for &excluded_component_id in without.iter() {
             if self.has_component(excluded_component_id) {
                 return None;
@@ -405,7 +430,7 @@ impl SerializableComponentBundle {
         let mut component_slots: [Option<&mut Box<dyn SerializableComponent>>; WITH] =
             array::from_fn(|_| None);
         for (index, slot) in component_slots.iter_mut().enumerate() {
-            // ew
+            // SAFETY: `with` is asserted to contain no dupliate component IDs, so no aliasing can occur.
             unsafe {
                 *slot = Some(
                     ((self.get_component(with[index])?) as *const Box<dyn SerializableComponent>
@@ -426,12 +451,12 @@ macro_rules! query_bundle {
     ($bundle:expr, ($($with:ty),*), ($($without:ty),*)) => {
         ::paste::paste! {
             $bundle.query([$(<$with>::COMPONENT_ID),*], [$(<$without>::COMPONENT_ID),*]).map(|[$([<$with:snake>]),*]| {
-                unsafe { ($(([<$with:snake>] as *const ::std::boxed::Box<dyn hydrogen_ecs::component::Component> as *const ::std::boxed::Box<$with>).as_ref().unwrap().as_ref(),)*) }
+                unsafe { ($(([<$with:snake>] as *const ::std::boxed::Box<dyn $crate::component::Component> as *const ::std::boxed::Box<$with>).as_ref().unwrap().as_ref(),)*) }
             })
         }
     };
     ($bundle:expr, $($with:ty),*) => {
-        hydrogen_ecs::component::query!($bundle, ($($with),*), ())
+        $crate::component::query!($bundle, ($($with),*), ())
     };
 }
 
@@ -440,11 +465,11 @@ macro_rules! query_bundle_mut {
     ($bundle:expr, ($($with:ty),*), ($($without:ty),*)) => {
         ::paste::paste! {
             $bundle.query_mut([$(<$with>::COMPONENT_ID),*], [$(<$without>::COMPONENT_ID),*]).map(|[$([<$with:snake>]),*]| {
-                unsafe { ($(([<$with:snake>] as *const ::std::boxed::Box<dyn hydrogen_ecs::component::Component> as *mut ::std::boxed::Box<$with>).as_mut().unwrap().as_mut(),)*) }
+                unsafe { ($(([<$with:snake>] as *mut ::std::boxed::Box<dyn $crate::component::Component> as *mut ::std::boxed::Box<$with>).as_mut().unwrap().as_mut(),)*) }
             })
         }
     };
     ($bundle:expr, $($with:ty),*) => {
-        hydrogen_ecs::component::query_mut!($bundle, ($($with),*), ())
+        $crate::component::query_mut!($bundle, ($($with),*), ())
     };
 }
